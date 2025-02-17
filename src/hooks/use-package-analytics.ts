@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { startOfDay, subDays, format } from "date-fns";
+import { subDays, format } from "date-fns";
 import { useUserType } from "./queryUser";
+import { getDaysPeriod } from "@/helpers/filterDashboard";
 
 interface DailyStats {
   date: string;
@@ -35,27 +36,49 @@ interface PackageAnalytics {
   statusStats: StatusStats[];
 }
 
-export function usePackageAnalytics() {
+export function usePackageAnalytics(period: string, apartment?: any) {
   const userTypeQuery = useUserType();
+
   return useQuery({
-    queryKey: ["package-analytics"],
+    queryKey: ["package-analytics", period, apartment],
     queryFn: async () => {
-      const endDate = startOfDay(new Date());
-      const startDate = subDays(endDate, 7);
-      const userType = await userTypeQuery.data;
+      const userType = userTypeQuery.data;
+      if (!userType) return;
 
-      const { data: packages, error } = await supabase
+      const { start, end } = getDaysPeriod(period);
+
+      let query = supabase
         .from("packages")
-        .select("*, apartments!inner(id)")
-        .eq("apartments.user_id", userType)
-        .gte("created_at", startDate.toISOString());
+        .select(
+          `
+          *,
+          apartment:apartments!inner(
+            id,
+            building:buildings(*)
+          )
+        `
+        )
+        .eq("apartment.user_id", userType)
+        .gte("created_at", start.toISOString())
+        .lt("created_at", end.toISOString());
 
+      if (apartment) {
+        query = query.eq("apartment.id", apartment);
+      }
+
+      const { data: packages, error } = await query;
       if (error) throw error;
 
+      // Determina o tamanho do array de estatísticas diárias
+      let lengthArray = 2;
+      if (period === "week") lengthArray = 7;
+      if (period === "month") lengthArray = 30;
+
       // Daily stats
-      const dailyStats: DailyStats[] = Array.from({ length: 7 })
-        .map((_, i) => {
-          const date = format(subDays(endDate, i), "yyyy-MM-dd");
+      const dailyStats: DailyStats[] = Array.from(
+        { length: lengthArray },
+        (_, i) => {
+          const date = format(subDays(end, i), "yyyy-MM-dd");
           const dayPackages = packages.filter((p) =>
             p.created_at.startsWith(date)
           );
@@ -65,13 +88,13 @@ export function usePackageAnalytics() {
             delivered: dayPackages.filter((p) => p.status === "delivered")
               .length,
           };
-        })
-        .reverse();
+        }
+      ).reverse();
 
       // Building stats
       const buildingMap = new Map<string, BuildingStats>();
       packages.forEach((p) => {
-        const buildingName = p.apartment.building.name;
+        const buildingName = p.apartment?.building?.name || "Desconhecido";
         if (!buildingMap.has(buildingName)) {
           buildingMap.set(buildingName, {
             building: buildingName,
@@ -119,7 +142,7 @@ export function usePackageAnalytics() {
         },
       ];
       statusStats.forEach((stat) => {
-        stat.percentage = (stat.count / total) * 100;
+        stat.percentage = total ? (stat.count / total) * 100 : 0;
       });
 
       return {
@@ -129,7 +152,7 @@ export function usePackageAnalytics() {
         statusStats,
       } as PackageAnalytics;
     },
-    refetchInterval: 5 * 60 * 1000, // 5 minutes
-    enabled: !userTypeQuery.isLoading,
+    refetchInterval: 5 * 60 * 1000, // 5 minutos
+    enabled: !!userTypeQuery.data,
   });
 }

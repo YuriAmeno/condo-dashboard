@@ -18,6 +18,10 @@ interface CreateApartmentData {
   number: string;
 }
 
+interface DeleteApartmentData {
+  id: string;
+}
+
 interface UpdateApartmentData {
   id: string;
   number: string;
@@ -67,6 +71,18 @@ export function useApartmentManagement(buildingId: string | null) {
     },
   });
 
+  const deleteApartment = useMutation({
+    mutationFn: async ({ id }: DeleteApartmentData) => {
+      const { error } = await supabase.from("apartments").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["apartments-with-delete", buildingId],
+      });
+    },
+  });
+
   const updateApartment = useMutation({
     mutationFn: async ({ id, ...data }: UpdateApartmentData) => {
       const { error } = await supabase
@@ -88,5 +104,6 @@ export function useApartmentManagement(buildingId: string | null) {
     error: query.error,
     createApartment,
     updateApartment,
+    deleteApartment,
   };
 }

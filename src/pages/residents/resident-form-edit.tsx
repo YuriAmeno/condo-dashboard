@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { applyPhoneMask } from "@/lib/utils";
+import type { Database } from "@/types/supabase";
 
 const residentSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -36,22 +37,28 @@ const residentSchema = z.object({
   receive_notifications: z.boolean().default(true),
 });
 
+type Resident = Database["public"]["Tables"]["residents"]["Update"];
+
 type ResidentFormData = z.infer<typeof residentSchema>;
 
-interface ResidentFormProps {
+interface ResidentFormEditProps {
   onSubmit: (data: ResidentFormData) => Promise<void>;
+  resident: Resident;
 }
 
-export function ResidentForm({ onSubmit }: ResidentFormProps) {
+export function ResidentFormEdit({
+  onSubmit,
+  resident,
+}: ResidentFormEditProps) {
   const form = useForm<ResidentFormData>({
     resolver: zodResolver(residentSchema),
     defaultValues: {
-      name: "",
-      building_id: "",
-      apartment_id: "",
-      phone: "",
-      email: "",
-      receive_notifications: true,
+      name: resident.name,
+      apartment_id: resident.apartment_id,
+
+      phone: applyPhoneMask(String(resident.phone)),
+      email: resident.email,
+      receive_notifications: resident.receive_notifications,
     },
   });
 
@@ -201,7 +208,7 @@ export function ResidentForm({ onSubmit }: ResidentFormProps) {
         />
 
         <Button type="submit" className="w-full">
-          Cadastrar Morador
+          Editar morador
         </Button>
       </form>
     </Form>
