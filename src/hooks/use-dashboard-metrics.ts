@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { startOfDay, subDays, isAfter } from "date-fns";
 import { useAuth } from "@/lib/auth";
 import { useUserType } from "./queryUser";
+import { getDaysPeriod } from "@/helpers/filterDashboard";
 
 interface DashboardMetrics {
   pendingPackages: number;
@@ -13,28 +14,34 @@ interface DashboardMetrics {
   totalNotifications: number;
 }
 
-export const useDashboardMetrics = () => {
+export const useDashboardMetrics = (period: string, apartment?: any) => {
   const { user } = useAuth();
   const userTypeQuery = useUserType();
 
   return useQuery({
-    queryKey: ["dashboard-metrics"],
+    queryKey: ["dashboard-metrics", period, apartment],
     queryFn: async () => {
       const today = startOfDay(new Date());
       const thirtyDaysAgo = subDays(today, 30);
-
-      // Wait for user type to be determined
       const userType = await userTypeQuery.data;
 
-      // Fetch packages with apartment join and user_id filter
-      const { data: packages, error } = await supabase
+      const { start, end } = getDaysPeriod(period);
+
+      let query = supabase
         .from("packages")
         .select("*, apartments!inner(id)")
-        .eq("apartments.user_id", userType);
+        .eq("apartments.user_id", userType)
+        .gte("created_at", start.toISOString())
+        .lt("created_at", end.toISOString());
+
+      if (apartment) {
+        query = query.eq("apartment.id", apartment);
+      }
+
+      const { data: packages, error } = await query;
 
       if (error) throw error;
 
-      // Filter pending packages
       const pendingPackages = packages.filter((p) => p.status === "pending");
 
       // Filter packages delivered today

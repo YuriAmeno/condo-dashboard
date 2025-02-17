@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { DoormanShift } from "@/types/supabase";
 
 import { useParams } from "react-router-dom";
+import { applyPhoneMask } from "@/lib/utils";
 
 const shiftMap: Record<DoormanShift, { label: string }> = {
   morning: { label: "Manhã (06:00 - 14:00)" },
@@ -288,11 +289,18 @@ export const DoormanForm = () => {
               <FormField
                 control={form.control}
                 name="phone"
-                render={({ field }) => (
+                render={({ field: { onChange, ...field } }) => (
                   <FormItem>
                     <FormLabel>Telefone</FormLabel>
                     <FormControl>
-                      <Input placeholder="(00) 00000-0000" {...field} />
+                      <Input
+                        placeholder="(00) 00000-0000"
+                        {...field}
+                        onChange={(e) => {
+                          const masked = applyPhoneMask(e.target.value);
+                          onChange(masked);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

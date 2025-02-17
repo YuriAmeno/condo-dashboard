@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import type { Database } from "@/types/supabase";
@@ -11,10 +11,21 @@ type Resident = Database["public"]["Tables"]["residents"]["Row"] & {
   packages?: Array<Database["public"]["Tables"]["packages"]["Row"]>;
 };
 
+interface UpdateBuildingData {
+  id: string;
+  data: any;
+}
+
+interface DeleteBuildingData {
+  id: string;
+}
+
 export function useResidents() {
   const { user } = useAuth();
   const userTypeQuery = useUserType();
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["residents", user?.id],
     queryFn: async () => {
       const userType = userTypeQuery.data;
@@ -44,4 +55,35 @@ export function useResidents() {
     enabled: !!user && !!userTypeQuery.data,
     staleTime: 1000 * 30, // 30 seconds
   });
+
+  const updateResidents = useMutation({
+    mutationFn: async ({ id, ...data }: UpdateBuildingData) => {
+      const { error } = await supabase
+        .from("residents")
+        .update(data)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["residents-with-update"] });
+    },
+  });
+
+  const deleteResident = useMutation({
+    mutationFn: async ({ id }: DeleteBuildingData) => {
+      const { error } = await supabase.from("residents").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["residents-with-delete"] });
+    },
+  });
+
+  return {
+    residents: query.data,
+    isLoading: query.isLoading,
+    error: query.error,
+    updateResidents,
+    deleteResident,
+  };
 }

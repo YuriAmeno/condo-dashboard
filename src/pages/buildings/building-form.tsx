@@ -1,7 +1,7 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -9,16 +9,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import type { Database } from '@/types/supabase';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import type { Database } from "@/types/supabase";
 
 const buildingSchema = z.object({
-  name: z.string().min(1, 'Nome da torre é obrigatório'),
+  name: z.string().min(1, "Nome da torre é obrigatório"),
 });
 
 type BuildingFormData = z.infer<typeof buildingSchema>;
-type Building = Database['public']['Tables']['buildings']['Row'];
+type Building = Database["public"]["Tables"]["buildings"]["Row"];
 
 interface BuildingFormProps {
   building?: Building;
@@ -29,7 +29,7 @@ export function BuildingForm({ building, onSubmit }: BuildingFormProps) {
   const form = useForm<BuildingFormData>({
     resolver: zodResolver(buildingSchema),
     defaultValues: {
-      name: building?.name || '',
+      name: building?.name || "",
     },
   });
 
@@ -51,7 +51,7 @@ export function BuildingForm({ building, onSubmit }: BuildingFormProps) {
         />
 
         <Button type="submit" className="w-full">
-          {building ? 'Atualizar Torre' : 'Criar Torre'}
+          {building ? "Atualizar Torre" : "Criar Torre"}
         </Button>
       </form>
     </Form>

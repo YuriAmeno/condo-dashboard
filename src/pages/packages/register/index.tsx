@@ -1,14 +1,14 @@
-import { useState, useRef } from 'react';
-import { useReactToPrint } from 'react-to-print';
-import { Package, Printer, Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useBuildings } from '@/hooks/use-buildings';
-import { useApartments } from '@/hooks/use-apartments';
-import { useResidents } from '@/hooks/use-residents';
-import { useCreatePackage } from '@/hooks/use-create-package';
-import { packageSchema, type PackageFormData } from '@/lib/validations/package';
-import { Button } from '@/components/ui/button';
+import { useState, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
+import { Package, Printer, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useBuildingsList } from "@/hooks/use-buildings";
+import { useApartments } from "@/hooks/use-apartments";
+import { useResidents } from "@/hooks/use-residents";
+import { useCreatePackage } from "@/hooks/use-create-package";
+import { packageSchema, type PackageFormData } from "@/lib/validations/package";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -16,16 +16,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -33,9 +33,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { PackageLabel } from '@/components/packages/package-label';
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { PackageLabel } from "@/components/packages/package-label";
 
 export function PackageRegister() {
   const [showLabel, setShowLabel] = useState(false);
@@ -47,23 +47,23 @@ export function PackageRegister() {
   const form = useForm<PackageFormData>({
     resolver: zodResolver(packageSchema),
     defaultValues: {
-      building_id: '',
-      apartment_id: '',
-      resident_id: '',
-      delivery_company: '',
-      store_name: '',
-      notes: '',
-      storage_location: '',
+      building_id: "",
+      apartment_id: "",
+      resident_id: "",
+      delivery_company: "",
+      store_name: "",
+      notes: "",
+      storage_location: "",
     },
   });
 
-  const { data: buildings } = useBuildings();
-  const { data: apartments } = useApartments(form.watch('building_id'));
+  const { data: buildings } = useBuildingsList();
+  const { data: apartments } = useApartments(form.watch("building_id"));
   const { data: residents } = useResidents();
 
   // Filtrar residentes pelo apartamento selecionado
   const filteredResidents = residents?.filter(
-    (resident) => resident.apartment.id === form.watch('apartment_id')
+    (resident) => resident.apartment.id === form.watch("apartment_id")
   );
 
   const handlePrint = useReactToPrint({
@@ -77,14 +77,17 @@ export function PackageRegister() {
       setShowLabel(true);
       form.reset();
       toast({
-        title: 'Encomenda registrada',
-        description: 'A encomenda foi registrada com sucesso.',
+        title: "Encomenda registrada",
+        description: "A encomenda foi registrada com sucesso.",
       });
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro ao registrar encomenda',
-        description: error instanceof Error ? error.message : 'Não foi possível registrar a encomenda. Tente novamente.',
+        variant: "destructive",
+        title: "Erro ao registrar encomenda",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível registrar a encomenda. Tente novamente.",
       });
     }
   };
@@ -115,8 +118,8 @@ export function PackageRegister() {
                       onValueChange={(value) => {
                         field.onChange(value);
                         // Reset apartment and resident when building changes
-                        form.setValue('apartment_id', '');
-                        form.setValue('resident_id', '');
+                        form.setValue("apartment_id", "");
+                        form.setValue("resident_id", "");
                       }}
                       value={field.value}
                     >
@@ -148,10 +151,10 @@ export function PackageRegister() {
                       onValueChange={(value) => {
                         field.onChange(value);
                         // Reset resident when apartment changes
-                        form.setValue('resident_id', '');
+                        form.setValue("resident_id", "");
                       }}
                       value={field.value}
-                      disabled={!form.watch('building_id')}
+                      disabled={!form.watch("building_id")}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -180,7 +183,7 @@ export function PackageRegister() {
                     <Select
                       onValueChange={field.onChange}
                       value={field.value}
-                      disabled={!form.watch('apartment_id')}
+                      disabled={!form.watch("apartment_id")}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -227,7 +230,10 @@ export function PackageRegister() {
                 <FormItem>
                   <FormLabel>Nome da Loja</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Amazon, Mercado Livre, etc" {...field} />
+                    <Input
+                      placeholder="Ex: Amazon, Mercado Livre, etc"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -241,7 +247,10 @@ export function PackageRegister() {
                 <FormItem>
                   <FormLabel>Local de Armazenamento</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Prateleira A3, Armário 2, etc" {...field} />
+                    <Input
+                      placeholder="Ex: Prateleira A3, Armário 2, etc"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -278,7 +287,7 @@ export function PackageRegister() {
                 Registrando...
               </>
             ) : (
-              'Registrar Encomenda'
+              "Registrar Encomenda"
             )}
           </Button>
         </form>
@@ -289,7 +298,8 @@ export function PackageRegister() {
           <DialogHeader>
             <DialogTitle>Etiqueta da Encomenda</DialogTitle>
             <DialogDescription>
-              A encomenda foi registrada com sucesso. Imprima a etiqueta para identificação.
+              A encomenda foi registrada com sucesso. Imprima a etiqueta para
+              identificação.
             </DialogDescription>
           </DialogHeader>
 

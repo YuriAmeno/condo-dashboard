@@ -1,6 +1,6 @@
-import { useApartmentManagement } from '@/hooks/use-apartment-management';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useApartmentManagement } from "@/hooks/use-apartment-management";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -8,7 +8,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -16,20 +16,42 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { ApartmentForm } from './apartment-form';
-import { useToast } from '@/hooks/use-toast';
-import { Plus, Loader2, Package, User } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+} from "@/components/ui/dialog";
+import { ApartmentForm } from "./apartment-form";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Loader2, X, User, Package } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+import { User as UserLogin } from "@supabase/supabase-js";
 
 interface ApartmentListProps {
   buildingId: string;
 }
 
 export function ApartmentList({ buildingId }: ApartmentListProps) {
-  const { apartments, isLoading, createApartment } = useApartmentManagement(buildingId);
+  const { apartments, isLoading, createApartment, deleteApartment } =
+    useApartmentManagement(buildingId);
   const { toast } = useToast();
+  const [user, setUser] = useState<UserLogin | null>(null);
+
+  useEffect(() => {
+    const init = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao buscar usuario",
+          description: "Não foi possível achar o usuario. Tente novamente.",
+        });
+      }
+
+      if (data) setUser(data.user);
+    };
+    init();
+  }, []);
 
   const handleCreateApartment = async (data: { number: string }) => {
     try {
@@ -38,21 +60,38 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
         building_id: buildingId,
       });
       toast({
-        title: 'Apartamento criado',
-        description: 'O apartamento foi criado com sucesso.',
+        title: "Apartamento criado",
+        description: "O apartamento foi criado com sucesso.",
       });
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro ao criar apartamento',
-        description: 'Não foi possível criar o apartamento. Tente novamente.',
+        variant: "destructive",
+        title: "Erro ao criar apartamento",
+        description: "Não foi possível criar o apartamento. Tente novamente.",
+      });
+    }
+  };
+
+  const handleDeleteApartment = async (id: string) => {
+    try {
+      await deleteApartment.mutateAsync({ id });
+      toast({
+        title: "Apartamento Deletado",
+        description: "O apartamento foi deletado com sucesso.",
+      });
+      window.location.reload();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao deletar apartamento",
+        description: "Não foi possível deletar o apartamento. Tente novamente.",
       });
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
+    <div className="space-y-4 w-[650px]">
+      <div className="flex justify-start">
         <Dialog>
           <DialogTrigger asChild>
             <Button>
@@ -63,7 +102,7 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Novo Apartamento</DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="flex items-start">
                 Adicione um novo apartamento à torre.
               </DialogDescription>
             </DialogHeader>
@@ -85,12 +124,13 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
               <TableHead>Moradores</TableHead>
               <TableHead>Encomendas Pendentes</TableHead>
               <TableHead>Última Entrega</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {apartments?.map((apartment) => {
               const pendingPackages = apartment.packages?.filter(
-                (p) => p.status === 'pending'
+                (p) => p.status === "pending"
               );
               const lastPackage = apartment.packages
                 ?.sort(
@@ -108,10 +148,10 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
                   <TableCell>
                     <Badge
                       variant={
-                        apartment.residents?.length ? 'default' : 'secondary'
+                        apartment.residents?.length ? "default" : "secondary"
                       }
                     >
-                      {apartment.residents?.length ? 'Ocupado' : 'Vago'}
+                      {apartment.residents?.length ? "Ocupado" : "Vago"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -136,6 +176,34 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
                         )}
                       </div>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          <X className="mr-2 h-4 w-8" />
+                        </DropdownMenuItem>
+                      </DialogTrigger>
+                      <DialogContent
+                        hidden={
+                          user?.user_metadata?.role == "doorman" ? true : false
+                        }
+                      >
+                        <DialogHeader>
+                          <DialogTitle>Deletar Torre</DialogTitle>
+                          <DialogDescription>
+                            Tem certeza que deseja deletar a torre ?
+                          </DialogDescription>
+                        </DialogHeader>
+                        <Button
+                          type="button"
+                          className="w-full"
+                          onClick={() => handleDeleteApartment(apartment.id)}
+                        >
+                          Deletar Apartamento
+                        </Button>
+                      </DialogContent>
+                    </Dialog>
                   </TableCell>
                 </TableRow>
               );

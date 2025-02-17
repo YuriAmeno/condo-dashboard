@@ -3,10 +3,55 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import type { Database } from "@/types/supabase";
 import { useUserType } from "./queryUser";
+import { getDaysPeriod } from "@/helpers/filterDashboard";
 
 type Building = Database["public"]["Tables"]["buildings"]["Row"];
 
-export function useBuildings() {
+export function useBuildings(period: string, apartment?: any) {
+  const { user } = useAuth();
+  const userTypeQuery = useUserType();
+
+  return useQuery({
+    queryKey: ["buildings", user?.id, period, apartment],
+    queryFn: async () => {
+      const userType = await userTypeQuery.data;
+      const { start, end } = getDaysPeriod(period);
+
+      let query = supabase
+        .from("buildings")
+        .select(
+          `
+          *,
+          apartment:apartments (
+            *
+          )
+        `
+        )
+        .eq("user_id", userType)
+        .gte("created_at", start.toISOString())
+        .lt("created_at", end.toISOString())
+        .order("name");
+
+      if (apartment) {
+        query = query.eq("apartment.id", apartment);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching buildings:", error);
+        throw error;
+      }
+
+      return data as Building[];
+    },
+    retry: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: !!user && !!userTypeQuery.data,
+  });
+}
+
+export function useBuildingsList() {
   const { user } = useAuth();
   const userTypeQuery = useUserType();
 
@@ -14,10 +59,19 @@ export function useBuildings() {
     queryKey: ["buildings", user?.id],
     queryFn: async () => {
       const userType = await userTypeQuery.data;
+
       const { data, error } = await supabase
         .from("buildings")
-        .select("*")
+        .select(
+          `
+          *,
+          apartment:apartments (
+            *
+          )
+        `
+        )
         .eq("user_id", userType)
+
         .order("name");
 
       if (error) {
