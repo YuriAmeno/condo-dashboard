@@ -9,9 +9,11 @@ import {
   Package,
   BellRing,
   Loader2,
+  Edit,
+  X,
 } from "lucide-react";
 import { useResidents } from "@/hooks/use-residents";
-import { useBuildings } from "@/hooks/use-buildings";
+import { useBuildingsList } from "@/hooks/use-buildings";
 import { useImportExport } from "@/hooks/use-import-export";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -56,6 +58,7 @@ import { NotificationSettings } from "./notification-settings";
 import { ResidentDetails } from "./resident-details";
 import { formatPhoneForDB } from "@/lib/utils";
 import type { Database } from "@/types/supabase";
+import { ResidentFormEdit } from "./resident-form-edit";
 
 type Resident = Database["public"]["Tables"]["residents"]["Row"] & {
   apartment: Database["public"]["Tables"]["apartments"]["Row"] & {
@@ -70,8 +73,9 @@ export function Residents() {
   const [isCreating, setIsCreating] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
 
-  const { data: residents, isLoading } = useResidents();
-  const { data: buildings } = useBuildings();
+  const { residents, isLoading, updateResidents, deleteResident } =
+    useResidents();
+  const { data: buildings } = useBuildingsList();
   const { importData, exportData } = useImportExport();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -143,6 +147,26 @@ export function Residents() {
     }
   };
 
+  const handleEditResident = async (id: string, data: any) => {
+    try {
+      const { building_id, ...filteredData } = data;
+
+      await updateResidents.mutateAsync({ id, ...filteredData });
+
+      toast({
+        title: "Morador atualizado",
+        description: "O morador foi editado com sucesso.",
+      });
+      window.location.reload();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao editar morador",
+        description: "Não foi possível editar o morador. Tente novamente.",
+      });
+    }
+  };
+
   const handleImport = async (file: File, mapping: Record<string, string>) => {
     try {
       await importData.mutateAsync({
@@ -198,6 +222,23 @@ export function Residents() {
         variant: "destructive",
         title: "Erro na exportação",
         description: "Não foi possível exportar os dados. Tente novamente.",
+      });
+    }
+  };
+
+  const handleDeleteResident = async (id: string) => {
+    try {
+      await deleteResident.mutateAsync({ id });
+      toast({
+        title: "Morador Deletado",
+        description: "O morador foi deletada com sucesso.",
+      });
+      window.location.reload();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao deletar morador",
+        description: "Não foi possível deletar o morador. Tente novamente.",
       });
     }
   };
@@ -384,6 +425,59 @@ export function Residents() {
                         <NotificationSettings resident={resident} />
                       </SheetContent>
                     </Sheet>
+
+                    {isManager && (
+                      <>
+                        <div>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Editar Morador</DialogTitle>
+                                <DialogDescription>
+                                  Editar informações do morador.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <ResidentFormEdit
+                                resident={resident}
+                                onSubmit={(data) =>
+                                  handleEditResident(resident.id, data)
+                                }
+                              />
+                            </DialogContent>
+                          </Dialog>
+
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Deletar Morador</DialogTitle>
+                                <DialogDescription>
+                                  Tem certeza que deseja deletar o morador ?
+                                </DialogDescription>
+                              </DialogHeader>
+                              <Button
+                                type="button"
+                                className="w-full"
+                                onClick={() =>
+                                  handleDeleteResident(resident.id)
+                                }
+                              >
+                                {"Deletar Morador"}
+                              </Button>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
