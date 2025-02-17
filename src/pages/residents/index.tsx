@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Users,
   Plus,
@@ -9,14 +9,14 @@ import {
   Package,
   BellRing,
   Loader2,
-} from 'lucide-react';
-import { useResidents } from '@/hooks/use-residents';
-import { useBuildings } from '@/hooks/use-buildings';
-import { useImportExport } from '@/hooks/use-import-export';
-import { useAuth } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "lucide-react";
+import { useResidents } from "@/hooks/use-residents";
+import { useBuildings } from "@/hooks/use-buildings";
+import { useImportExport } from "@/hooks/use-import-export";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -24,14 +24,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -39,8 +39,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -48,25 +48,25 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
-import { useToast } from '@/hooks/use-toast';
-import { ImportDialog } from './import-dialog';
-import { ResidentForm } from './resident-form';
-import { NotificationSettings } from './notification-settings';
-import { ResidentDetails } from './resident-details';
-import { formatPhoneForDB } from '@/lib/utils';
-import type { Database } from '@/types/supabase';
+} from "@/components/ui/sheet";
+import { useToast } from "@/hooks/use-toast";
+import { ImportDialog } from "./import-dialog";
+import { ResidentForm } from "./resident-form";
+import { NotificationSettings } from "./notification-settings";
+import { ResidentDetails } from "./resident-details";
+import { formatPhoneForDB } from "@/lib/utils";
+import type { Database } from "@/types/supabase";
 
-type Resident = Database['public']['Tables']['residents']['Row'] & {
-  apartment: Database['public']['Tables']['apartments']['Row'] & {
-    building: Database['public']['Tables']['buildings']['Row'];
+type Resident = Database["public"]["Tables"]["residents"]["Row"] & {
+  apartment: Database["public"]["Tables"]["apartments"]["Row"] & {
+    building: Database["public"]["Tables"]["buildings"]["Row"];
   };
-  packages?: Array<Database['public']['Tables']['packages']['Row']>;
+  packages?: Array<Database["public"]["Tables"]["packages"]["Row"]>;
 };
 
 export function Residents() {
-  const [search, setSearch] = useState('');
-  const [buildingFilter, setBuildingFilter] = useState<string | 'all'>('all');
+  const [search, setSearch] = useState("");
+  const [buildingFilter, setBuildingFilter] = useState<string | "all">("all");
   const [isCreating, setIsCreating] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
 
@@ -75,17 +75,21 @@ export function Residents() {
   const { importData, exportData } = useImportExport();
   const { toast } = useToast();
   const { user } = useAuth();
-  const isManager = user?.role === 'manager';
+  const isManager = user?.role === "manager";
 
   const filteredResidents = residents?.filter((resident: Resident) => {
-    const matchesSearch = 
+    const matchesSearch =
       resident.name.toLowerCase().includes(search.toLowerCase()) ||
       resident.apartment.number.toLowerCase().includes(search.toLowerCase()) ||
-      resident.apartment.building.name.toLowerCase().includes(search.toLowerCase()) ||
+      resident.apartment.building.name
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
       resident.phone.includes(search) ||
       resident.email.toLowerCase().includes(search.toLowerCase());
 
-    const matchesBuilding = buildingFilter === 'all' || resident.apartment.building.id === buildingFilter;
+    const matchesBuilding =
+      buildingFilter === "all" ||
+      resident.apartment.building.id === buildingFilter;
 
     return matchesSearch && matchesBuilding;
   });
@@ -95,46 +99,44 @@ export function Residents() {
       setIsCreating(true);
 
       const { data: existingResident } = await supabase
-        .from('residents')
-        .select('id')
-        .eq('email', data.email)
+        .from("residents")
+        .select("id")
+        .eq("email", data.email)
         .single();
 
       if (existingResident) {
         toast({
-          variant: 'destructive',
-          title: 'Erro ao cadastrar morador',
-          description: 'Já existe um morador cadastrado com este email.',
+          variant: "destructive",
+          title: "Erro ao cadastrar morador",
+          description: "Já existe um morador cadastrado com este email.",
         });
         return;
       }
 
-      const { error } = await supabase
-        .from('residents')
-        .insert({
-          name: data.name,
-          phone: formatPhoneForDB(data.phone),
-          email: data.email,
-          apartment_id: data.apartment_id,
-          receive_notifications: data.receive_notifications,
-        });
+      const { error } = await supabase.from("residents").insert({
+        name: data.name,
+        phone: formatPhoneForDB(data.phone),
+        email: data.email,
+        apartment_id: data.apartment_id,
+        receive_notifications: data.receive_notifications,
+      });
 
       if (error) {
         throw error;
       }
 
       toast({
-        title: 'Morador cadastrado',
-        description: 'O morador foi cadastrado com sucesso.',
+        title: "Morador cadastrado",
+        description: "O morador foi cadastrado com sucesso.",
       });
 
       setIsCreating(false);
     } catch (error) {
-      console.error('Error creating resident:', error);
+      console.error("Error creating resident:", error);
       toast({
-        variant: 'destructive',
-        title: 'Erro ao cadastrar morador',
-        description: 'Não foi possível cadastrar o morador. Tente novamente.',
+        variant: "destructive",
+        title: "Erro ao cadastrar morador",
+        description: "Não foi possível cadastrar o morador. Tente novamente.",
       });
     } finally {
       setIsCreating(false);
@@ -146,22 +148,25 @@ export function Residents() {
       await importData.mutateAsync({
         file,
         config: {
-          type: 'residents',
+          type: "residents",
           mapping,
         },
       });
 
       toast({
-        title: 'Importação concluída',
-        description: 'Os moradores foram importados com sucesso.',
+        title: "Importação concluída",
+        description: "Os moradores foram importados com sucesso.",
       });
-      
+
       setShowImportDialog(false);
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro na importação',
-        description: error instanceof Error ? error.message : 'Não foi possível importar os moradores. Verifique o arquivo e tente novamente.',
+        variant: "destructive",
+        title: "Erro na importação",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível importar os moradores. Verifique o arquivo e tente novamente.",
       });
     }
   };
@@ -169,28 +174,30 @@ export function Residents() {
   const handleExport = async () => {
     try {
       const blob = await exportData.mutateAsync({
-        type: 'residents',
-        fields: ['name', 'phone', 'email', 'apartment_id'],
+        type: "residents",
+        fields: ["name", "phone", "email", "apartment_id"],
       });
 
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = `moradores-${new Date().toISOString().split('T')[0]}.xlsx`;
+      link.download = `moradores-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
       toast({
-        title: 'Exportação concluída',
-        description: 'Os dados foram exportados com sucesso.',
+        title: "Exportação concluída",
+        description: "Os dados foram exportados com sucesso.",
       });
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro na exportação',
-        description: 'Não foi possível exportar os dados. Tente novamente.',
+        variant: "destructive",
+        title: "Erro na exportação",
+        description: "Não foi possível exportar os dados. Tente novamente.",
       });
     }
   };
@@ -262,7 +269,9 @@ export function Residents() {
 
         <Select
           value={buildingFilter}
-          onValueChange={(value) => setBuildingFilter(value as typeof buildingFilter)}
+          onValueChange={(value) =>
+            setBuildingFilter(value as typeof buildingFilter)
+          }
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por torre" />
@@ -302,28 +311,35 @@ export function Residents() {
                   <div className="flex items-center space-x-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {resident.apartment.building.name} - {resident.apartment.number}
+                      {resident.apartment.building.name} -{" "}
+                      {resident.apartment.number}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="space-y-1">
                     <p className="text-sm">{resident.phone}</p>
-                    <p className="text-sm text-muted-foreground">{resident.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {resident.email}
+                    </p>
                   </div>
                 </TableCell>
                 <TableCell>
                   <Badge
-                    variant={resident.receive_notifications ? 'default' : 'secondary'}
+                    variant={
+                      resident.receive_notifications ? "default" : "secondary"
+                    }
                   >
-                    {resident.receive_notifications ? 'Ativas' : 'Pausadas'}
+                    {resident.receive_notifications ? "Ativas" : "Pausadas"}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <Package className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {resident.packages?.filter((p) => p.status === 'pending').length || 0} pendentes
+                      {resident.packages?.filter((p) => p.status === "pending")
+                        .length || 0}{" "}
+                      pendentes
                     </span>
                   </div>
                 </TableCell>
@@ -335,7 +351,10 @@ export function Residents() {
                           <Users className="h-4 w-4" />
                         </Button>
                       </SheetTrigger>
-                      <SheetContent side="right" className="w-[800px] sm:w-[800px]">
+                      <SheetContent
+                        side="right"
+                        className="w-[800px] sm:w-[800px]"
+                      >
                         <SheetHeader>
                           <SheetTitle>Detalhes do Morador</SheetTitle>
                           <SheetDescription>
@@ -352,7 +371,10 @@ export function Residents() {
                           <BellRing className="h-4 w-4" />
                         </Button>
                       </SheetTrigger>
-                      <SheetContent side="right" className="w-[800px] sm:w-[800px]">
+                      <SheetContent
+                        side="right"
+                        className="w-[800px] sm:w-[800px]"
+                      >
                         <SheetHeader>
                           <SheetTitle>Notificações</SheetTitle>
                           <SheetDescription>

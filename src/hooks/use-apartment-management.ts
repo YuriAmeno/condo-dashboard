@@ -1,15 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import type { Database } from '@/types/supabase';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { Database } from "@/types/supabase";
+import { useUserType } from "./queryUser";
 
-type Apartment = Database['public']['Tables']['apartments']['Row'];
-type Package = Database['public']['Tables']['packages']['Row'];
-type Resident = Database['public']['Tables']['residents']['Row'];
+type Apartment = Database["public"]["Tables"]["apartments"]["Row"];
+type Package = Database["public"]["Tables"]["packages"]["Row"];
+type Resident = Database["public"]["Tables"]["residents"]["Row"];
 
 interface ApartmentWithDetails extends Apartment {
   residents: Resident[];
   packages: Package[];
-  building: Database['public']['Tables']['buildings']['Row'];
+  building: Database["public"]["Tables"]["buildings"]["Row"];
 }
 
 interface CreateApartmentData {
@@ -24,38 +25,44 @@ interface UpdateApartmentData {
 
 export function useApartmentManagement(buildingId: string | null) {
   const queryClient = useQueryClient();
+  const userTypeQuery = useUserType();
+  console.log("BIULD", buildingId);
 
   const query = useQuery({
-    queryKey: ['apartments-with-details', buildingId],
+    queryKey: ["apartments-with-details", buildingId],
     queryFn: async () => {
       if (!buildingId) return [];
-
+      const userType = await userTypeQuery.data;
       const { data, error } = await supabase
-        .from('apartments')
-        .select(`
+        .from("apartments")
+        .select(
+          `
           *,
           building:buildings (*),
           residents:residents (*),
           packages:packages (*)
-        `)
-        .eq('building_id', buildingId)
-        .order('number');
+        `
+        )
+        .eq("building_id", buildingId)
+        .eq("user_id", userType)
+
+        .order("number");
 
       if (error) throw error;
 
       return data as ApartmentWithDetails[];
     },
-    enabled: !!buildingId,
+    enabled: !!buildingId && !!userTypeQuery.data,
   });
 
   const createApartment = useMutation({
     mutationFn: async (data: CreateApartmentData) => {
-      const { error } = await supabase.from('apartments').insert(data);
+      const { error } = await supabase.from("apartments").insert(data);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['apartments-with-details', buildingId],
+        queryKey: ["apartments-with-details", buildingId],
       });
     },
   });
@@ -63,14 +70,14 @@ export function useApartmentManagement(buildingId: string | null) {
   const updateApartment = useMutation({
     mutationFn: async ({ id, ...data }: UpdateApartmentData) => {
       const { error } = await supabase
-        .from('apartments')
+        .from("apartments")
         .update(data)
-        .eq('id', id);
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['apartments-with-details', buildingId],
+        queryKey: ["apartments-with-details", buildingId],
       });
     },
   });

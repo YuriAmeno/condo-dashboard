@@ -1,12 +1,12 @@
-import { forwardRef } from 'react';
-import { Package } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
-import { cn } from '@/lib/utils';
-import type { Database } from '@/types/supabase';
+import { forwardRef } from "react";
+import { Package } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { cn } from "@/lib/utils";
+import type { Database } from "@/types/supabase";
 
-type PackageData = Database['public']['Tables']['packages']['Row'] & {
-  apartment: Database['public']['Tables']['apartments']['Row'];
-  building: Database['public']['Tables']['buildings']['Row'];
+type PackageData = Database["public"]["Tables"]["packages"]["Row"] & {
+  apartment: Database["public"]["Tables"]["apartments"]["Row"];
+  building: Database["public"]["Tables"]["buildings"]["Row"];
 };
 
 interface PackageLabelProps {
@@ -15,7 +15,7 @@ interface PackageLabelProps {
 }
 
 export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
-  ({ data, className = '' }, ref) => {
+  ({ data, className = "" }, ref) => {
     return (
       <div
         ref={ref}
@@ -27,14 +27,12 @@ export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
       >
         <div className="flex items-center justify-center mb-4">
           <Package className="h-8 w-8 mr-2 text-primary" />
-          <span className="text-xl font-bold text-primary">
-            Porta Dex
-          </span>
+          <span className="text-xl font-bold text-primary">Porta Dex</span>
         </div>
 
         <div className="flex justify-center mb-4">
-          <QRCodeSVG 
-            value={data.qr_code} 
+          <QRCodeSVG
+            value={data.qr_code}
             size={200}
             bgColor="transparent"
             fgColor="currentColor"
@@ -49,12 +47,16 @@ export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-muted-foreground">Apartamento:</span>
+            <span className="font-semibold text-muted-foreground">
+              Apartamento:
+            </span>
             <span className="text-foreground">{data.apartment.number}</span>
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-muted-foreground">Recebido em:</span>
+            <span className="font-semibold text-muted-foreground">
+              Recebido em:
+            </span>
             <span className="text-foreground">
               {new Date(data.received_at).toLocaleString()}
             </span>
@@ -66,7 +68,16 @@ export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-muted-foreground">Porteiro:</span>
+            <span className="font-semibold text-muted-foreground">
+              Codigo QR:
+            </span>
+            <span className="text-foreground">{data.qr_code}</span>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-muted-foreground">
+              Porteiro:
+            </span>
             <span className="text-foreground">{data.doorman_name}</span>
           </div>
         </div>
@@ -75,4 +86,4 @@ export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
   }
 );
 
-PackageLabel.displayName = 'PackageLabel';
+PackageLabel.displayName = "PackageLabel";

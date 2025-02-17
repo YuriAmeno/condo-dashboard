@@ -1,24 +1,31 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { format, formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import * as Icons from 'lucide-react';
-import { useDashboardMetrics } from '@/hooks/use-dashboard-metrics';
-import { usePackageAnalytics } from '@/hooks/use-package-analytics';
-import { useRecentPackages } from '@/hooks/use-recent-packages';
-import { useAlerts } from '@/hooks/use-alerts';
-import { useBuildings } from '@/hooks/use-buildings';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { format, formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import * as Icons from "lucide-react";
+import { useDashboardMetrics } from "@/hooks/use-dashboard-metrics";
+import { usePackageAnalytics } from "@/hooks/use-package-analytics";
+import { useRecentPackages } from "@/hooks/use-recent-packages";
+import { useAlerts } from "@/hooks/use-alerts";
+import { useBuildings } from "@/hooks/use-buildings";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -26,15 +33,26 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { ChartContainer, PieChart, Pie, ChartTooltip } from '@/components/ui/chart';
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import {
+  ChartContainer,
+  PieChart,
+  Pie,
+  ChartTooltip,
+} from "@/components/ui/chart";
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const [period, setPeriod] = useState('today');
+  const [period, setPeriod] = useState("today");
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
@@ -47,14 +65,14 @@ export function Dashboard() {
 
   // Helper function to safely format dates
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '';
+    if (!dateString) return "";
     try {
       const date = new Date(dateString);
       // Check if date is valid
-      if (isNaN(date.getTime())) return '';
+      if (isNaN(date.getTime())) return "";
       return formatDistanceToNow(date, { locale: ptBR, addSuffix: true });
     } catch (error) {
-      return '';
+      return "";
     }
   };
 
@@ -77,7 +95,10 @@ export function Dashboard() {
             </SelectContent>
           </Select>
 
-          <Select value={selectedBuilding ?? ''} onValueChange={setSelectedBuilding}>
+          <Select
+            value={selectedBuilding ?? ""}
+            onValueChange={setSelectedBuilding}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Selecione o prédio" />
             </SelectTrigger>
@@ -91,7 +112,7 @@ export function Dashboard() {
           </Select>
 
           <Button
-            variant={autoRefresh ? 'default' : 'outline'}
+            variant={autoRefresh ? "default" : "outline"}
             onClick={() => setAutoRefresh(!autoRefresh)}
           >
             <Icons.RefreshCw className="mr-2 h-4 w-4" />
@@ -111,11 +132,15 @@ export function Dashboard() {
             {/* Total de Pacotes Pendentes */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pacotes Pendentes</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Pacotes Pendentes
+                </CardTitle>
                 <Icons.Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics?.pendingPackages ?? 0}</div>
+                <div className="text-2xl font-bold">
+                  {metrics?.pendingPackages ?? 0}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {metrics?.deliveredToday ?? 0} entregues hoje
                 </p>
@@ -125,23 +150,34 @@ export function Dashboard() {
             {/* Taxa de Ocupação do Armazenamento */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Ocupação do Armazenamento</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Ocupação do Armazenamento
+                </CardTitle>
                 <Icons.Archive className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics?.storageOccupation.toFixed(1)}%</div>
-                <Progress value={metrics?.storageOccupation ?? 0} className="mt-2" />
+                <div className="text-2xl font-bold">
+                  {metrics?.storageOccupation.toFixed(1)}%
+                </div>
+                <Progress
+                  value={metrics?.storageOccupation ?? 0}
+                  className="mt-2"
+                />
               </CardContent>
             </Card>
 
             {/* Pacotes Atrasados */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pacotes Atrasados</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Pacotes Atrasados
+                </CardTitle>
                 <Icons.AlertTriangle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics?.delayedPackages ?? 0}</div>
+                <div className="text-2xl font-bold">
+                  {metrics?.delayedPackages ?? 0}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Aguardando retirada há mais de 7 dias
                 </p>
@@ -151,16 +187,18 @@ export function Dashboard() {
             {/* Tempo Médio de Retirada */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Tempo Médio de Retirada</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Tempo Médio de Retirada
+                </CardTitle>
                 <Icons.Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {metrics?.averagePickupTime ? (
-                    `${Math.round(metrics.averagePickupTime / (1000 * 60 * 60))}h`
-                  ) : (
-                    'N/A'
-                  )}
+                  {metrics?.averagePickupTime
+                    ? `${Math.round(
+                        metrics.averagePickupTime / (1000 * 60 * 60)
+                      )}h`
+                    : "N/A"}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Média dos últimos 30 dias
@@ -173,7 +211,9 @@ export function Dashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Pacotes Recentes</CardTitle>
-              <CardDescription>Lista dos últimos pacotes processados</CardDescription>
+              <CardDescription>
+                Lista dos últimos pacotes processados
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -189,25 +229,29 @@ export function Dashboard() {
                   {recentPackages?.map((pkg) => (
                     <TableRow key={pkg.id}>
                       <TableCell>{pkg.id}</TableCell>
-                      <TableCell>{pkg.delivery_company} - {pkg.store_name}</TableCell>
                       <TableCell>
-                        <Badge variant={pkg.status === 'delivered' ? 'default' : 'secondary'}>
-                          {pkg.status === 'delivered' ? 'Entregue' : 'Pendente'}
+                        {pkg.delivery_company} - {pkg.store_name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            pkg.status === "delivered" ? "default" : "secondary"
+                          }
+                        >
+                          {pkg.status === "delivered" ? "Entregue" : "Pendente"}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        {formatDate(pkg.created_at)}
-                      </TableCell>
+                      <TableCell>{formatDate(pkg.created_at)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </CardContent>
             <CardFooter>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full"
-                onClick={() => navigate('/packages/list')}
+                onClick={() => navigate("/packages/list")}
               >
                 Ver Todos os Pacotes
               </Button>
@@ -225,8 +269,8 @@ export function Dashboard() {
               <CardContent>
                 <ChartContainer config={{ height: 300 }}>
                   <PieChart>
-                    <Pie 
-                      data={analytics?.statusStats ?? []} 
+                    <Pie
+                      data={analytics?.statusStats ?? []}
                       dataKey="count"
                       nameKey="status"
                       cx="50%"
@@ -264,15 +308,17 @@ export function Dashboard() {
                     {alerts?.map((alert) => (
                       <TableRow key={alert.id}>
                         <TableCell>
-                          <Badge variant="default">
-                            {alert.type}
-                          </Badge>
+                          <Badge variant="default">{alert.type}</Badge>
                         </TableCell>
                         <TableCell>{alert.message}</TableCell>
                         <TableCell>
-                          {format(new Date(alert.createdAt), "dd/MM/yyyy HH:mm", {
-                            locale: ptBR,
-                          })}
+                          {format(
+                            new Date(alert.createdAt),
+                            "dd/MM/yyyy HH:mm",
+                            {
+                              locale: ptBR,
+                            }
+                          )}
                         </TableCell>
                         <TableCell>
                           <Button size="sm" variant="outline">
@@ -289,7 +335,10 @@ export function Dashboard() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={!!selectedAlert} onOpenChange={() => setSelectedAlert(null)}>
+      <Dialog
+        open={!!selectedAlert}
+        onOpenChange={() => setSelectedAlert(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Detalhes do Alerta</DialogTitle>
@@ -301,9 +350,7 @@ export function Dashboard() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <h4 className="font-medium">Status</h4>
-                <Badge variant="default">
-                  {selectedAlert.type}
-                </Badge>
+                <Badge variant="default">{selectedAlert.type}</Badge>
               </div>
               <div className="space-y-2">
                 <h4 className="font-medium">Descrição</h4>
@@ -314,9 +361,13 @@ export function Dashboard() {
               <div className="space-y-2">
                 <h4 className="font-medium">Data</h4>
                 <p className="text-sm text-muted-foreground">
-                  {format(new Date(selectedAlert.createdAt), "dd/MM/yyyy 'às' HH:mm", {
-                    locale: ptBR,
-                  })}
+                  {format(
+                    new Date(selectedAlert.createdAt),
+                    "dd/MM/yyyy 'às' HH:mm",
+                    {
+                      locale: ptBR,
+                    }
+                  )}
                 </p>
               </div>
             </div>

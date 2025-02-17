@@ -1,10 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth';
-import type { Database } from '@/types/supabase';
-import type { DoormanStatus, DoormanShift } from '@/types/supabase';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
+import type { Database } from "@/types/supabase";
+import type { DoormanStatus, DoormanShift } from "@/types/supabase";
 
-type Doorman = Database['public']['Tables']['doormen']['Row'];
+type Doorman = Database["public"]["Tables"]["doormen"]["Row"];
 
 interface DoormanWithStats extends Doorman {
   total_packages: number;
@@ -46,49 +46,48 @@ export function useDoormen(filters?: {
   const { user } = useAuth();
 
   const query = useQuery({
-    queryKey: ['doormen', filters, user?.id],
+    queryKey: ["doormen", filters, user?.id],
     queryFn: async () => {
       // Buscar porteiros vinculados ao manager atual
-      const { data: doormen, error: doormenError } = await supabase
-        .from('doormen')
-        .select(`
-          *,
-          packages:packages (
-            id,
-            received_at,
-            delivered_at,
-            status
-          )
+      const { data: doormen, error: doormenError } = await supabase.from(
+        "doormen"
+      ).select(`
+          *
         `);
 
       if (doormenError) throw doormenError;
 
       // Aplicar filtros
       let filteredDoormen = doormen.map((doorman) => {
-        const packages = doorman.packages as any[] || [];
-        const today = new Date().toISOString().split('T')[0];
+        const packages = (doorman.packages as any[]) || [];
+        const today = new Date().toISOString().split("T")[0];
 
         // Calcular métricas
         const total_packages = packages.length;
-        const packages_today = packages.filter(p => 
+        const packages_today = packages.filter((p) =>
           p.received_at.startsWith(today)
         ).length;
 
         // Tempo médio de registro
-        const registrationTimes = packages.map(p => {
+        const registrationTimes = packages.map((p) => {
           const received = new Date(p.received_at);
           const created = new Date(p.created_at);
           return received.getTime() - created.getTime();
         });
 
-        const average_time = registrationTimes.length > 0
-          ? registrationTimes.reduce((a, b) => a + b, 0) / registrationTimes.length
-          : 0;
+        const average_time =
+          registrationTimes.length > 0
+            ? registrationTimes.reduce((a, b) => a + b, 0) /
+              registrationTimes.length
+            : 0;
 
         // Taxa de erros (pacotes com correções/total)
-        const error_rate = packages.length > 0
-          ? (packages.filter(p => p.corrections?.length > 0).length / packages.length) * 100
-          : 0;
+        const error_rate =
+          packages.length > 0
+            ? (packages.filter((p) => p.corrections?.length > 0).length /
+                packages.length) *
+              100
+            : 0;
 
         return {
           ...doorman,
@@ -101,81 +100,84 @@ export function useDoormen(filters?: {
 
       // Aplicar filtros
       if (filters?.status) {
-        filteredDoormen = filteredDoormen.filter(d => d.status === filters.status);
+        filteredDoormen = filteredDoormen.filter(
+          (d) => d.status === filters.status
+        );
       }
 
       if (filters?.shift) {
-        filteredDoormen = filteredDoormen.filter(d => d.shift === filters.shift);
+        filteredDoormen = filteredDoormen.filter(
+          (d) => d.shift === filters.shift
+        );
       }
 
       if (filters?.search) {
         const search = filters.search.toLowerCase();
-        filteredDoormen = filteredDoormen.filter(d =>
-          d.name.toLowerCase().includes(search) ||
-          d.cpf.includes(search) ||
-          d.email.toLowerCase().includes(search)
+        filteredDoormen = filteredDoormen.filter(
+          (d) =>
+            d.name.toLowerCase().includes(search) ||
+            d.cpf.includes(search) ||
+            d.email.toLowerCase().includes(search)
         );
       }
 
       return filteredDoormen as DoormanWithStats[];
     },
-    enabled: !!user && user.role === 'manager',
+    enabled: !!user && user.role === "manager",
   });
 
   const createDoorman = useMutation({
     mutationFn: async (data: CreateDoormanData) => {
       // Primeiro verificar se o manager existe
       const { data: manager, error: managerError } = await supabase
-        .from('managers')
-        .select('id')
-        .eq('user_id', user?.id)
+        .from("managers")
+        .select("id")
+        .eq("user_id", user?.id)
         .single();
 
       if (managerError || !manager) {
-        throw new Error('Manager não encontrado');
+        throw new Error("Manager não encontrado");
       }
 
       // Criar o porteiro vinculado ao manager atual
-      const { error } = await supabase
-        .from('doormen')
-        .insert({
-          ...data,
-          status: 'active',
-          manager_id: manager.id
-        });
+      const { error } = await supabase.from("doormen").insert({
+        ...data,
+        status: "active",
+        manager_id: manager.id,
+      });
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['doormen'] });
+      queryClient.invalidateQueries({ queryKey: ["doormen"] });
     },
   });
 
   const updateDoorman = useMutation({
     mutationFn: async ({ id, ...data }: UpdateDoormanData) => {
       const { error } = await supabase
-        .from('doormen')
+        .from("doormen")
         .update(data)
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['doormen'] });
+      queryClient.invalidateQueries({ queryKey: ["doormen"] });
     },
   });
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, reason, end_date }: UpdateStatusData) => {
       const { error: updateError } = await supabase
-        .from('doormen')
+        .from("doormen")
         .update({ status })
-        .eq('id', id);
+        .eq("id", id);
 
       if (updateError) throw updateError;
 
       const { error: historyError } = await supabase
-        .from('doormen_history')
+        .from("doormen_history")
         .insert({
           doorman_id: id,
           status,
@@ -187,7 +189,7 @@ export function useDoormen(filters?: {
       if (historyError) throw historyError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['doormen'] });
+      queryClient.invalidateQueries({ queryKey: ["doormen"] });
     },
   });
 

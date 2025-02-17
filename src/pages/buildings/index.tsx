@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Building2,
   Plus,
@@ -8,18 +8,18 @@ import {
   Home,
   Loader2,
   MoreHorizontal,
-} from 'lucide-react';
-import { useBuildingManagement } from '@/hooks/use-building-management';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { useBuildingManagement } from "@/hooks/use-building-management";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +27,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Sheet,
   SheetContent,
@@ -43,14 +43,15 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
-import { useToast } from '@/hooks/use-toast';
-import { ApartmentList } from './apartment-list';
-import { BuildingForm } from './building-form';
+} from "@/components/ui/sheet";
+import { useToast } from "@/hooks/use-toast";
+import { ApartmentList } from "./apartment-list";
+import { BuildingForm } from "./building-form";
 
 export function Buildings() {
-  const [search, setSearch] = useState('');
-  const { buildings, isLoading, createBuilding, updateBuilding } = useBuildingManagement();
+  const [search, setSearch] = useState("");
+  const { buildings, isLoading, createBuilding, updateBuilding } =
+    useBuildingManagement();
   const { toast } = useToast();
 
   // Filtrar prédios baseado na busca
@@ -62,14 +63,14 @@ export function Buildings() {
     try {
       await createBuilding.mutateAsync(data);
       toast({
-        title: 'Torre criada',
-        description: 'A torre foi criada com sucesso.',
+        title: "Torre criada",
+        description: "A torre foi criada com sucesso.",
       });
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro ao criar torre',
-        description: 'Não foi possível criar a torre. Tente novamente.',
+        variant: "destructive",
+        title: "Erro ao criar torre",
+        description: "Não foi possível criar a torre. Tente novamente.",
       });
     }
   };
@@ -78,18 +79,19 @@ export function Buildings() {
     try {
       await updateBuilding.mutateAsync({ id, ...data });
       toast({
-        title: 'Torre atualizada',
-        description: 'A torre foi atualizada com sucesso.',
+        title: "Torre atualizada",
+        description: "A torre foi atualizada com sucesso.",
       });
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro ao atualizar torre',
-        description: 'Não foi possível atualizar a torre. Tente novamente.',
+        variant: "destructive",
+        title: "Erro ao atualizar torre",
+        description: "Não foi possível atualizar a torre. Tente novamente.",
       });
     }
   };
 
+  console.log("FILTEDEBILDING", filteredBuildings);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -167,7 +169,9 @@ export function Buildings() {
                         </DialogHeader>
                         <BuildingForm
                           building={building}
-                          onSubmit={(data) => handleUpdateBuilding(building.id, data)}
+                          onSubmit={(data) =>
+                            handleUpdateBuilding(building.id, data)
+                          }
                         />
                       </DialogContent>
                     </Dialog>
@@ -178,9 +182,14 @@ export function Buildings() {
                           Gerenciar Apartamentos
                         </DropdownMenuItem>
                       </SheetTrigger>
-                      <SheetContent side="right" className="w-[800px] sm:w-[800px]">
+                      <SheetContent
+                        side="right"
+                        className="w-[800px] sm:w-[800px]"
+                      >
                         <SheetHeader>
-                          <SheetTitle>Apartamentos - {building.name}</SheetTitle>
+                          <SheetTitle>
+                            Apartamentos - {building.name}
+                          </SheetTitle>
                           <SheetDescription>
                             Gerencie os apartamentos desta torre.
                           </SheetDescription>

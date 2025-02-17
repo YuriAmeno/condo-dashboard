@@ -1,8 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import type { Database } from '@/types/supabase';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { Database } from "@/types/supabase";
+import { useUserType } from "./queryUser";
 
-type Building = Database['public']['Tables']['buildings']['Row'];
+type Building = Database["public"]["Tables"]["buildings"]["Row"];
 
 interface BuildingWithStats extends Building {
   total_apartments: number;
@@ -22,39 +23,51 @@ interface UpdateBuildingData {
 
 export function useBuildingManagement() {
   const queryClient = useQueryClient();
+  const userTypeQuery = useUserType();
 
   const query = useQuery({
-    queryKey: ['buildings-with-stats'],
+    queryKey: ["buildings-with-stats"],
     queryFn: async () => {
+      const userType = userTypeQuery.data;
       const { data: buildings, error: buildingsError } = await supabase
-        .from('buildings')
-        .select(`
+        .from("buildings")
+        .select(
+          `
           *,
           apartments:apartments (
             id,
             residents:residents (id),
             packages:packages (id, status)
           )
-        `)
-        .order('name');
+        `
+        )
+        .eq("user_id", userType)
+        .order("name");
 
       if (buildingsError) throw buildingsError;
 
       return buildings.map((building) => {
         const totalApartments = building.apartments?.length || 0;
-        const totalResidents = building.apartments?.reduce(
-          (acc: number, apt: { residents?: any[] }) => acc + (apt.residents?.length || 0),
-          0
-        ) || 0;
-        const pendingPackages = building.apartments?.reduce(
-          (acc: number, apt: { packages?: any[] }) =>
-            acc +
-            (apt.packages?.filter((p: { status: string }) => p.status === 'pending').length || 0),
-          0
-        ) || 0;
-        const occupiedApartments = building.apartments?.filter(
-          (apt: { residents?: any[] }) => apt.residents && apt.residents.length > 0
-        ).length || 0;
+        const totalResidents =
+          building.apartments?.reduce(
+            (acc: number, apt: { residents?: any[] }) =>
+              acc + (apt.residents?.length || 0),
+            0
+          ) || 0;
+        const pendingPackages =
+          building.apartments?.reduce(
+            (acc: number, apt: { packages?: any[] }) =>
+              acc +
+              (apt.packages?.filter(
+                (p: { status: string }) => p.status === "pending"
+              ).length || 0),
+            0
+          ) || 0;
+        const occupiedApartments =
+          building.apartments?.filter(
+            (apt: { residents?: any[] }) =>
+              apt.residents && apt.residents.length > 0
+          ).length || 0;
 
         return {
           ...building,
@@ -67,28 +80,29 @@ export function useBuildingManagement() {
         };
       }) as BuildingWithStats[];
     },
+    enabled: !!userTypeQuery.data,
   });
 
   const createBuilding = useMutation({
     mutationFn: async (data: CreateBuildingData) => {
-      const { error } = await supabase.from('buildings').insert(data);
+      const { error } = await supabase.from("buildings").insert(data);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['buildings-with-stats'] });
+      queryClient.invalidateQueries({ queryKey: ["buildings-with-stats"] });
     },
   });
 
   const updateBuilding = useMutation({
     mutationFn: async ({ id, ...data }: UpdateBuildingData) => {
       const { error } = await supabase
-        .from('buildings')
+        .from("buildings")
         .update(data)
-        .eq('id', id);
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['buildings-with-stats'] });
+      queryClient.invalidateQueries({ queryKey: ["buildings-with-stats"] });
     },
   });
 

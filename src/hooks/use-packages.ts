@@ -18,7 +18,6 @@ interface UsePackagesOptions {
 }
 
 export function usePackages(options: UsePackagesOptions = {}) {
-  // const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const query = useQuery({

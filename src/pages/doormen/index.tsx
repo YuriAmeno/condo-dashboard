@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   Plus,
@@ -11,27 +11,27 @@ import {
   UserCog,
   BellRing,
   Loader2,
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useDoormen } from '@/hooks/use-doormen';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useDoormen } from "@/hooks/use-doormen";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -39,7 +39,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,43 +47,43 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { DoormanDetails } from './doorman-details';
+} from "@/components/ui/dropdown-menu";
+import { DoormanDetails } from "./doorman-details";
 
 const statusMap = {
-  active: { label: 'Ativo', variant: 'default' },
-  vacation: { label: 'Férias', variant: 'secondary' },
-  away: { label: 'Afastado', variant: 'secondary' },
-  inactive: { label: 'Inativo', variant: 'destructive' },
+  active: { label: "Ativo", variant: "default" },
+  vacation: { label: "Férias", variant: "secondary" },
+  away: { label: "Afastado", variant: "secondary" },
+  inactive: { label: "Inativo", variant: "destructive" },
 } as const;
 
 const shiftMap = {
-  morning: { label: 'Manhã' },
-  afternoon: { label: 'Tarde' },
-  night: { label: 'Noite' },
+  morning: { label: "Manhã" },
+  afternoon: { label: "Tarde" },
+  night: { label: "Noite" },
 } as const;
 
 export function Doormen() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [shiftFilter, setShiftFilter] = useState<string>('all');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [shiftFilter, setShiftFilter] = useState<string>("all");
 
   const { doormen, isLoading } = useDoormen({
-    status: statusFilter === 'all' ? undefined : statusFilter as any,
-    shift: shiftFilter === 'all' ? undefined : shiftFilter as any,
+    status: statusFilter === "all" ? undefined : (statusFilter as any),
+    shift: shiftFilter === "all" ? undefined : (shiftFilter as any),
   });
 
-  // Filtrar porteiros baseado na busca
-  const filteredDoormen = doormen?.filter((doorman) =>
-    doorman.name.toLowerCase().includes(search.toLowerCase()) ||
-    doorman.email.toLowerCase().includes(search.toLowerCase()) ||
-    doorman.phone.includes(search)
+  const filteredDoormen = doormen?.filter(
+    (doorman) =>
+      doorman.name.toLowerCase().includes(search.toLowerCase()) ||
+      doorman.email.toLowerCase().includes(search.toLowerCase()) ||
+      doorman.phone.includes(search)
   );
 
   // Função para formatar o tempo médio
   const formatAverageTime = (time: number | null) => {
-    if (time === null || isNaN(time)) return 'N/A';
+    if (time === null || isNaN(time)) return "N/A";
     const seconds = Math.round(time / 1000);
     return `${seconds}s`;
   };
@@ -96,7 +96,7 @@ export function Doormen() {
           <h1 className="text-3xl font-bold tracking-tight">Porteiros</h1>
         </div>
 
-        <Button onClick={() => navigate('/doormen/new')}>
+        <Button onClick={() => navigate("/doormen/new")}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Porteiro
         </Button>
@@ -164,11 +164,15 @@ export function Doormen() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate(`/doormen/${doorman.id}`)}>
+                    <DropdownMenuItem
+                      onClick={() => navigate(`/doormen/${doorman.id}`)}
+                    >
                       <UserCog className="mr-2 h-4 w-4" />
                       Editar Porteiro
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate(`/doormen/${doorman.id}/status`)}>
+                    <DropdownMenuItem
+                      onClick={() => navigate(`/doormen/${doorman.id}/status`)}
+                    >
                       <History className="mr-2 h-4 w-4" />
                       Alterar Status
                     </DropdownMenuItem>
@@ -183,11 +187,7 @@ export function Doormen() {
                         <BellRing className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-medium">Status</span>
                       </div>
-                      <Badge
-                        variant={
-                          statusMap[doorman.status].variant as any
-                        }
-                      >
+                      <Badge variant={statusMap[doorman.status].variant as any}>
                         {statusMap[doorman.status].label}
                       </Badge>
                     </div>
@@ -205,9 +205,7 @@ export function Doormen() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">
-                          Tempo Médio
-                        </span>
+                        <span className="text-sm font-medium">Tempo Médio</span>
                       </div>
                       <p className="text-2xl font-bold">
                         {formatAverageTime(doorman.average_time)}
@@ -218,10 +216,14 @@ export function Doormen() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <p className="text-sm text-muted-foreground">
-                        Cadastrado em{' '}
-                        {format(new Date(doorman.created_at), "dd 'de' MMMM 'de' yyyy", {
-                          locale: ptBR,
-                        })}
+                        Cadastrado em{" "}
+                        {format(
+                          new Date(doorman.created_at),
+                          "dd 'de' MMMM 'de' yyyy",
+                          {
+                            locale: ptBR,
+                          }
+                        )}
                       </p>
                     </div>
 
@@ -229,7 +231,10 @@ export function Doormen() {
                       <SheetTrigger asChild>
                         <Button variant="outline">Ver Detalhes</Button>
                       </SheetTrigger>
-                      <SheetContent side="right" className="w-[800px] sm:w-[800px]">
+                      <SheetContent
+                        side="right"
+                        className="w-[800px] sm:w-[800px]"
+                      >
                         <SheetHeader>
                           <SheetTitle>Detalhes do Porteiro</SheetTitle>
                           <SheetDescription>

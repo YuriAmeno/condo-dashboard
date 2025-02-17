@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { startOfDay, subDays, format } from 'date-fns';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { startOfDay, subDays, format } from "date-fns";
+import { useUserType } from "./queryUser";
 
 interface DailyStats {
   date: string;
@@ -35,38 +36,37 @@ interface PackageAnalytics {
 }
 
 export function usePackageAnalytics() {
+  const userTypeQuery = useUserType();
   return useQuery({
-    queryKey: ['package-analytics'],
+    queryKey: ["package-analytics"],
     queryFn: async () => {
       const endDate = startOfDay(new Date());
       const startDate = subDays(endDate, 7);
+      const userType = await userTypeQuery.data;
 
       const { data: packages, error } = await supabase
-        .from('packages')
-        .select(`
-          *,
-          apartment:apartments (
-            building:buildings (
-              name
-            )
-          )
-        `)
-        .gte('created_at', startDate.toISOString());
+        .from("packages")
+        .select("*, apartments!inner(id)")
+        .eq("apartments.user_id", userType)
+        .gte("created_at", startDate.toISOString());
 
       if (error) throw error;
 
       // Daily stats
-      const dailyStats: DailyStats[] = Array.from({ length: 7 }).map((_, i) => {
-        const date = format(subDays(endDate, i), 'yyyy-MM-dd');
-        const dayPackages = packages.filter((p) =>
-          p.created_at.startsWith(date)
-        );
-        return {
-          date,
-          received: dayPackages.length,
-          delivered: dayPackages.filter((p) => p.status === 'delivered').length,
-        };
-      }).reverse();
+      const dailyStats: DailyStats[] = Array.from({ length: 7 })
+        .map((_, i) => {
+          const date = format(subDays(endDate, i), "yyyy-MM-dd");
+          const dayPackages = packages.filter((p) =>
+            p.created_at.startsWith(date)
+          );
+          return {
+            date,
+            received: dayPackages.length,
+            delivered: dayPackages.filter((p) => p.status === "delivered")
+              .length,
+          };
+        })
+        .reverse();
 
       // Building stats
       const buildingMap = new Map<string, BuildingStats>();
@@ -82,7 +82,7 @@ export function usePackageAnalytics() {
         }
         const stats = buildingMap.get(buildingName)!;
         stats.total++;
-        if (p.status === 'delivered') {
+        if (p.status === "delivered") {
           stats.delivered++;
         } else {
           stats.pending++;
@@ -108,13 +108,13 @@ export function usePackageAnalytics() {
       const total = packages.length;
       const statusStats: StatusStats[] = [
         {
-          status: 'Pendente',
-          count: packages.filter((p) => p.status === 'pending').length,
+          status: "Pendente",
+          count: packages.filter((p) => p.status === "pending").length,
           percentage: 0,
         },
         {
-          status: 'Entregue',
-          count: packages.filter((p) => p.status === 'delivered').length,
+          status: "Entregue",
+          count: packages.filter((p) => p.status === "delivered").length,
           percentage: 0,
         },
       ];
@@ -130,5 +130,6 @@ export function usePackageAnalytics() {
       } as PackageAnalytics;
     },
     refetchInterval: 5 * 60 * 1000, // 5 minutes
+    enabled: !userTypeQuery.isLoading,
   });
 }

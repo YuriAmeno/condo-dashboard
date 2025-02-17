@@ -1,34 +1,34 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth';
-import type { Database } from '@/types/supabase';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
+import type { Database } from "@/types/supabase";
+import { useUserType } from "./queryUser";
 
-type Building = Database['public']['Tables']['buildings']['Row'];
+type Building = Database["public"]["Tables"]["buildings"]["Row"];
 
 export function useBuildings() {
   const { user } = useAuth();
+  const userTypeQuery = useUserType();
 
   return useQuery({
-    queryKey: ['buildings', user?.id],
+    queryKey: ["buildings", user?.id],
     queryFn: async () => {
-      console.log('Fetching buildings...');
-      
-      // Buscar buildings vinculadas ao usuário atual através do manager
+      const userType = await userTypeQuery.data;
       const { data, error } = await supabase
-        .from('buildings')
-        .select('*')
-        .order('name');
+        .from("buildings")
+        .select("*")
+        .eq("user_id", userType)
+        .order("name");
 
       if (error) {
-        console.error('Error fetching buildings:', error);
+        console.error("Error fetching buildings:", error);
         throw error;
       }
 
-      console.log('Buildings fetched:', data);
       return data as Building[];
     },
     retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    enabled: !!user,
+    enabled: !!user && !!userTypeQuery.data,
   });
 }
