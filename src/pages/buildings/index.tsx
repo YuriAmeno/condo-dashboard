@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Building2,
   Plus,
@@ -8,6 +8,7 @@ import {
   Home,
   Loader2,
   MoreHorizontal,
+  Delete,
 } from "lucide-react";
 import { useBuildingManagement } from "@/hooks/use-building-management";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogContentBuilding,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -47,12 +49,36 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { ApartmentList } from "./apartment-list";
 import { BuildingForm } from "./building-form";
+import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
 export function Buildings() {
   const [search, setSearch] = useState("");
-  const { buildings, isLoading, createBuilding, updateBuilding } =
-    useBuildingManagement();
+  const {
+    buildings,
+    isLoading,
+    createBuilding,
+    updateBuilding,
+    deleteBuilding,
+  } = useBuildingManagement();
   const { toast } = useToast();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const init = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao buscar usuario",
+          description: "Não foi possível achar o usuario. Tente novamente.",
+        });
+      }
+
+      if (data) setUser(data.user);
+    };
+    init();
+  }, []);
 
   // Filtrar prédios baseado na busca
   const filteredBuildings = buildings?.filter((building) =>
@@ -66,6 +92,7 @@ export function Buildings() {
         title: "Torre criada",
         description: "A torre foi criada com sucesso.",
       });
+      window.location.reload();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -82,6 +109,7 @@ export function Buildings() {
         title: "Torre atualizada",
         description: "A torre foi atualizada com sucesso.",
       });
+      window.location.reload();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -91,7 +119,23 @@ export function Buildings() {
     }
   };
 
-  console.log("FILTEDEBILDING", filteredBuildings);
+  const handleDeleteBuilding = async (id: string) => {
+    try {
+      await deleteBuilding.mutateAsync({ id });
+      toast({
+        title: "Torre Deletada",
+        description: "A torre foi deletada com sucesso.",
+      });
+      window.location.reload();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao deletar torre",
+        description: "Não foi possível deletar a torre. Tente novamente.",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -134,7 +178,7 @@ export function Buildings() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-6 ">
           {filteredBuildings?.map((building) => (
             <Card key={building.id}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -175,30 +219,55 @@ export function Buildings() {
                         />
                       </DialogContent>
                     </Dialog>
-                    <Sheet>
-                      <SheetTrigger asChild>
+
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          <Delete className="mr-2 h-4 w-4" />
+                          Deletar Torre
+                        </DropdownMenuItem>
+                      </DialogTrigger>
+                      <DialogContent
+                        hidden={
+                          user?.user_metadata?.role == "doorman" ? true : false
+                        }
+                      >
+                        <DialogHeader>
+                          <DialogTitle>Deletar Torre</DialogTitle>
+                          <DialogDescription>
+                            Tem certeza que deseja deletar a torre ?
+                          </DialogDescription>
+                        </DialogHeader>
+                        <Button
+                          type="button"
+                          className="w-full"
+                          onClick={() => handleDeleteBuilding(building.id)}
+                        >
+                          {"Deletar Torre"}
+                        </Button>
+                      </DialogContent>
+                    </Dialog>
+                    <Dialog>
+                      <DialogTrigger asChild>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                           <Home className="mr-2 h-4 w-4" />
                           Gerenciar Apartamentos
                         </DropdownMenuItem>
-                      </SheetTrigger>
-                      <SheetContent
-                        side="right"
-                        className="w-[800px] sm:w-[800px]"
-                      >
-                        <SheetHeader>
-                          <SheetTitle>
+                      </DialogTrigger>
+                      <DialogContentBuilding>
+                        <DialogHeader>
+                          <DialogTitle>
                             Apartamentos - {building.name}
-                          </SheetTitle>
-                          <SheetDescription>
+                          </DialogTitle>
+                          <DialogDescription>
                             Gerencie os apartamentos desta torre.
-                          </SheetDescription>
-                        </SheetHeader>
+                          </DialogDescription>
+                        </DialogHeader>
                         <div className="mt-6">
                           <ApartmentList buildingId={building.id} />
                         </div>
-                      </SheetContent>
-                    </Sheet>
+                      </DialogContentBuilding>
+                    </Dialog>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </CardHeader>
