@@ -1,6 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/lib/auth';
 import type { Database } from '@/types/supabase';
 
@@ -19,7 +18,7 @@ interface UsePackagesOptions {
 }
 
 export function usePackages(options: UsePackagesOptions = {}) {
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const query = useQuery({
@@ -39,29 +38,31 @@ export function usePackages(options: UsePackagesOptions = {}) {
       if (options.status) {
         query = query.eq('status', options.status);
       }
-      
+
       if (options.buildingId) {
         query = query.eq('apartment.building_id', options.buildingId);
       }
-      
+
       if (options.residentId) {
         query = query.eq('resident_id', options.residentId);
       }
-      
+
       query = query.order('received_at', { ascending: false });
-      
+
       if (options.limit) {
         query = query.limit(options.limit);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      
+
       return data as Package[];
     },
     refetchInterval: options.status === 'pending' ? 30 * 1000 : false,
     enabled: !!user,
   });
+
+  return query;
 
   // ... resto do código permanece igual
 }
