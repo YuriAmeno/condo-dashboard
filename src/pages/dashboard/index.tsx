@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -43,12 +43,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import {
-  ChartContainer,
-  PieChart,
-  Pie,
-  ChartTooltip,
-} from "@/components/ui/chart";
+import { PieChart, Pie } from "@/components/ui/chart";
+import { Cell, Legend, ResponsiveContainer, Tooltip } from "recharts";
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -57,13 +53,33 @@ export function Dashboard() {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
 
-  const { data: metrics } = useDashboardMetrics();
-  const { data: analytics } = usePackageAnalytics();
-  const { data: recentPackages } = useRecentPackages();
-  const { data: alerts } = useAlerts();
-  const { data: buildings } = useBuildings();
+  const { data: metrics, refetch: refetchMetrics } = useDashboardMetrics(
+    period,
+    selectedBuilding
+  );
+  const { data: analytics, refetch: refetchAnalytics } = usePackageAnalytics(
+    period,
+    selectedBuilding
+  );
+  const { data: recentPackages, refetch: refetchRecentPackages } =
+    useRecentPackages(period, selectedBuilding);
+  const { data: alerts, refetch: refetchAlerts } = useAlerts(
+    period,
+    selectedBuilding
+  );
+  const { data: buildings, refetch: refetchBuildings } = useBuildings(
+    period,
+    selectedBuilding
+  );
 
-  // Helper function to safely format dates
+  useEffect(() => {
+    refetchMetrics();
+    refetchAnalytics();
+    refetchRecentPackages();
+    refetchAlerts();
+    refetchBuildings();
+  }, [period, selectedBuilding]);
+
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "";
     try {
@@ -76,6 +92,7 @@ export function Dashboard() {
     }
   };
 
+  const COLORS = ["#FF8042", "#00C49F"];
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -264,24 +281,39 @@ export function Dashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Distribuição de Pacotes</CardTitle>
-                <CardDescription>Por tipo de entrega</CardDescription>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={{ height: 300 }}>
-                  <PieChart>
-                    <Pie
-                      data={analytics?.statusStats ?? []}
-                      dataKey="count"
-                      nameKey="status"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      fill="#8884d8"
-                      label
-                    />
-                    <ChartTooltip />
-                  </PieChart>
-                </ChartContainer>
+                {analytics && analytics?.statusStats?.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={analytics.statusStats}
+                        dataKey="count"
+                        nameKey="status"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        fill="#8884d8"
+                        label={({ percent, name }) =>
+                          `${name}: ${(percent * 100).toFixed(0)}%`
+                        }
+                      >
+                        {analytics?.statusStats?.map((_, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => `${value} pacotes`} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-center text-gray-500">
+                    Nenhum dado disponível
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>

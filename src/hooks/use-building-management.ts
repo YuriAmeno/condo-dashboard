@@ -21,6 +21,10 @@ interface UpdateBuildingData {
   name: string;
 }
 
+interface DeleteBuildingData {
+  id: string;
+}
+
 export function useBuildingManagement() {
   const queryClient = useQueryClient();
   const userTypeQuery = useUserType();
@@ -105,6 +109,15 @@ export function useBuildingManagement() {
       queryClient.invalidateQueries({ queryKey: ["buildings-with-stats"] });
     },
   });
+  const deleteBuilding = useMutation({
+    mutationFn: async ({ id }: DeleteBuildingData) => {
+      const { error } = await supabase.from("buildings").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["buildings-with-stats"] });
+    },
+  });
 
   return {
     buildings: query.data,
@@ -112,5 +125,6 @@ export function useBuildingManagement() {
     error: query.error,
     createBuilding,
     updateBuilding,
+    deleteBuilding,
   };
 }
