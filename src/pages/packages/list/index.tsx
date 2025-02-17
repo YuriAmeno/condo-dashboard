@@ -1,25 +1,18 @@
-import { useState } from 'react';
-import {
-  Package,
-  Search,
-  Building2,
-  User,
-  Clock,
-  Loader2,
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useBuildings } from '@/hooks/use-buildings';
-import { useRecentPackages } from '@/hooks/use-recent-packages';
-import { Input } from '@/components/ui/input';
+import { useState } from "react";
+import { Package, Search, Building2, User, Clock, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useBuildingsList } from "@/hooks/use-buildings";
+import { useRecentPackagesList } from "@/hooks/use-recent-packages";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -27,26 +20,31 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 
 export function PackageList() {
-  const [search, setSearch] = useState('');
-  const [buildingFilter, setBuildingFilter] = useState<string | 'all'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'delivered'>('all');
+  const [search, setSearch] = useState("");
+  const [buildingFilter, setBuildingFilter] = useState<string | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "pending" | "delivered"
+  >("all");
 
-  const { data: buildings } = useBuildings();
-  const { data: packages, isLoading } = useRecentPackages(100); // Buscar mais pacotes para a lista
+  const { data: buildings } = useBuildingsList();
+  const { data: packages, isLoading } = useRecentPackagesList(100); // Buscar mais pacotes para a lista
 
   // Filtrar pacotes
   const filteredPackages = packages?.filter((pkg) => {
-    const matchesSearch = 
-      pkg.apartment.building.name.toLowerCase().includes(search.toLowerCase()) ||
+    const matchesSearch =
+      pkg.apartment.building.name
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
       pkg.apartment.number.toLowerCase().includes(search.toLowerCase()) ||
       pkg.delivery_company.toLowerCase().includes(search.toLowerCase()) ||
       pkg.store_name.toLowerCase().includes(search.toLowerCase());
 
-    const matchesBuilding = buildingFilter === 'all' || pkg.apartment.building.id === buildingFilter;
-    const matchesStatus = statusFilter === 'all' || pkg.status === statusFilter;
+    const matchesBuilding =
+      buildingFilter === "all" || pkg.apartment.building.id === buildingFilter;
+    const matchesStatus = statusFilter === "all" || pkg.status === statusFilter;
 
     return matchesSearch && matchesBuilding && matchesStatus;
   });
@@ -92,7 +90,9 @@ export function PackageList() {
 
         <Select
           value={statusFilter}
-          onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}
+          onValueChange={(value) =>
+            setStatusFilter(value as typeof statusFilter)
+          }
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por status" />
@@ -127,9 +127,11 @@ export function PackageList() {
               <TableRow key={pkg.id}>
                 <TableCell>
                   <Badge
-                    variant={pkg.status === 'delivered' ? 'default' : 'secondary'}
+                    variant={
+                      pkg.status === "delivered" ? "default" : "secondary"
+                    }
                   >
-                    {pkg.status === 'delivered' ? 'Entregue' : 'Pendente'}
+                    {pkg.status === "delivered" ? "Entregue" : "Pendente"}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -152,9 +154,13 @@ export function PackageList() {
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {format(new Date(pkg.received_at), "dd/MM/yyyy 'às' HH:mm", {
-                        locale: ptBR,
-                      })}
+                      {format(
+                        new Date(pkg.received_at),
+                        "dd/MM/yyyy 'às' HH:mm",
+                        {
+                          locale: ptBR,
+                        }
+                      )}
                     </span>
                   </div>
                 </TableCell>
