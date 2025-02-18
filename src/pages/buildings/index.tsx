@@ -38,14 +38,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+
 import { useToast } from "@/hooks/use-toast";
 import { ApartmentList } from "./apartment-list";
 import { BuildingForm } from "./building-form";
@@ -144,23 +137,25 @@ export function Buildings() {
           <h1 className="text-3xl font-bold tracking-tight">Torres</h1>
         </div>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Torre
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nova Torre</DialogTitle>
-              <DialogDescription>
-                Adicione uma nova torre ao condomínio.
-              </DialogDescription>
-            </DialogHeader>
-            <BuildingForm onSubmit={handleCreateBuilding} />
-          </DialogContent>
-        </Dialog>
+        {user?.user_metadata.role !== "doorman" && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Torre
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Nova Torre</DialogTitle>
+                <DialogDescription>
+                  Adicione uma nova torre ao condomínio.
+                </DialogDescription>
+              </DialogHeader>
+              <BuildingForm onSubmit={handleCreateBuilding} />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="flex items-center space-x-2">
@@ -197,56 +192,60 @@ export function Buildings() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Editar Torre
-                        </DropdownMenuItem>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Editar Torre</DialogTitle>
-                          <DialogDescription>
-                            Altere as informações da torre.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <BuildingForm
-                          building={building}
-                          onSubmit={(data) =>
-                            handleUpdateBuilding(building.id, data)
-                          }
-                        />
-                      </DialogContent>
-                    </Dialog>
+                    {user?.user_metadata?.role !== "doorman" && (
+                      <>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              Editar Torre
+                            </DropdownMenuItem>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Editar Torre</DialogTitle>
+                              <DialogDescription>
+                                Altere as informações da torre.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <BuildingForm
+                              building={building}
+                              onSubmit={(data) =>
+                                handleUpdateBuilding(building.id, data)
+                              }
+                            />
+                          </DialogContent>
+                        </Dialog>
 
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          <Delete className="mr-2 h-4 w-4" />
-                          Deletar Torre
-                        </DropdownMenuItem>
-                      </DialogTrigger>
-                      <DialogContent
-                        hidden={
-                          user?.user_metadata?.role == "doorman" ? true : false
-                        }
-                      >
-                        <DialogHeader>
-                          <DialogTitle>Deletar Torre</DialogTitle>
-                          <DialogDescription>
-                            Tem certeza que deseja deletar a torre ?
-                          </DialogDescription>
-                        </DialogHeader>
-                        <Button
-                          type="button"
-                          className="w-full"
-                          onClick={() => handleDeleteBuilding(building.id)}
-                        >
-                          {"Deletar Torre"}
-                        </Button>
-                      </DialogContent>
-                    </Dialog>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <Delete className="mr-2 h-4 w-4" />
+                              Deletar Torre
+                            </DropdownMenuItem>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Deletar Torre</DialogTitle>
+                              <DialogDescription>
+                                Tem certeza que deseja deletar a torre ?
+                              </DialogDescription>
+                            </DialogHeader>
+                            <Button
+                              type="button"
+                              className="w-full"
+                              onClick={() => handleDeleteBuilding(building.id)}
+                            >
+                              {"Deletar Torre"}
+                            </Button>
+                          </DialogContent>
+                        </Dialog>
+                      </>
+                    )}
                     <Dialog>
                       <DialogTrigger asChild>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>

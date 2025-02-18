@@ -58,12 +58,12 @@ export function usePackageAnalytics(period: string, apartment?: any) {
           )
         `
         )
-        .eq("apartment.user_id", userType)
+        .eq("apartment.user_id", userType?.relatedId)
         .gte("created_at", start.toISOString())
         .lt("created_at", end.toISOString());
 
       if (apartment) {
-        query = query.eq("apartment.id", apartment);
+        query = query.eq("apartment.building.id", apartment);
       }
 
       const { data: packages, error } = await query;

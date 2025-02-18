@@ -23,19 +23,41 @@ export const useDashboardMetrics = (period: string, apartment?: any) => {
     queryFn: async () => {
       const today = startOfDay(new Date());
       const thirtyDaysAgo = subDays(today, 30);
-      const userType = await userTypeQuery.data;
+      const userType = userTypeQuery.data;
 
       const { start, end } = getDaysPeriod(period);
 
       let query = supabase
         .from("packages")
-        .select("*, apartments!inner(id)")
-        .eq("apartments.user_id", userType)
+        .select(
+          `*,apartment:apartments!inner(
+          id,
+          building:buildings(*)
+        )`
+        )
         .gte("created_at", start.toISOString())
         .lt("created_at", end.toISOString());
 
-      if (apartment) {
-        query = query.eq("apartment.id", apartment);
+      if (userType?.type === "manager") {
+        const { data: doormen, error: doormenError } = await supabase
+          .from("doormen")
+          .select("user_id")
+          .eq("manager_id", userType.relatedId);
+
+        if (doormenError) {
+          console.error("Error fetching doormen:", doormenError);
+          return null;
+        }
+
+        const doormenIds = doormen.map((d) => d.user_id);
+        doormenIds.push(userType.relatedId);
+
+        query = query.in("apartment.user_id", doormenIds);
+      } else {
+        query = query.in("apartment.user_id", [
+          userType?.relatedId,
+          userType?.doormanUserId,
+        ]);
       }
 
       const { data: packages, error } = await query;

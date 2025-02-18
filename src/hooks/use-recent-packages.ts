@@ -33,14 +33,14 @@ export function useRecentPackages(period: string, apartment?: any) {
         )
         `
         )
-        .eq("apartment.user_id", userType)
+        .eq("apartment.user_id", userType?.relatedId)
         .gte("created_at", start.toISOString())
         .lt("created_at", end.toISOString())
         .order("created_at", { ascending: false })
         .limit(limit);
 
       if (apartment) {
-        query = query.eq("apartment.id", apartment);
+        query = query.eq("apartment.building.id", apartment);
       }
 
       const { data: packages, error } = await query;
@@ -49,7 +49,7 @@ export function useRecentPackages(period: string, apartment?: any) {
       return packages as Package[];
     },
     refetchInterval: 30 * 1000,
-    enabled: !!userTypeQuery.data,
+    enabled: !!userTypeQuery.data?.relatedId,
   });
 }
 
@@ -73,7 +73,7 @@ export function useRecentPackagesList(limit = 10) {
         )
         `
         )
-        .eq("apartment.user_id", userType)
+        .eq("apartment.user_id", userType?.relatedId)
         .order("created_at", { ascending: false })
         .limit(limit);
 
@@ -81,6 +81,6 @@ export function useRecentPackagesList(limit = 10) {
       return packages as Package[];
     },
     refetchInterval: 30 * 1000,
-    enabled: !!userTypeQuery.data,
+    enabled: !!userTypeQuery.data?.relatedId,
   });
 }

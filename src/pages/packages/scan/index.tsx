@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { format, formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { useState, useEffect, useCallback } from "react";
+import { format, formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   Camera,
   QrCode,
@@ -13,23 +13,23 @@ import {
   CalendarClock,
   CheckCircle2,
   AlertCircle,
-} from 'lucide-react';
-import { useQRCodeScanner } from '@/hooks/use-qr-code-scanner';
-import { usePackageByQR } from '@/hooks/use-package-by-qr';
-import { usePackageDelivery } from '@/hooks/use-package-delivery';
-import { useRecentDeliveries } from '@/hooks/use-recent-deliveries';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+} from "lucide-react";
+import { useQRCodeScanner } from "@/hooks/use-qr-code-scanner";
+import { usePackageByQR } from "@/hooks/use-package-by-qr";
+import { usePackageDelivery } from "@/hooks/use-package-delivery";
+import { useRecentDeliveries } from "@/hooks/use-recent-deliveries";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Dialog,
   DialogContent,
@@ -37,20 +37,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
 export function PackageScan() {
   const [qrCode, setQrCode] = useState<string | null>(null);
-  const [manualCode, setManualCode] = useState('');
+  const [manualCode, setManualCode] = useState("");
   const [showDeliveryDialog, setShowDeliveryDialog] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [deliveryNotes, setDeliveryNotes] = useState('');
+  const [deliveryNotes, setDeliveryNotes] = useState("");
   const { toast } = useToast();
 
-  const { data: package_, isLoading: isLoadingPackage } = usePackageByQR(qrCode);
+  const { data: package_, isLoading: isLoadingPackage } =
+    usePackageByQR(qrCode);
   const { data: recentDeliveries } = useRecentDeliveries();
   const deliveryMutation = usePackageDelivery();
 
@@ -62,15 +63,18 @@ export function PackageScan() {
     }
   }, []);
 
-  const handleScanError = useCallback((error: string) => {
-    if (!error.includes('NotFound')) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro no Scanner',
-        description: error,
-      });
-    }
-  }, [toast]);
+  const handleScanError = useCallback(
+    (error: string) => {
+      if (!error.includes("NotFound")) {
+        toast({
+          variant: "destructive",
+          title: "Erro no Scanner",
+          description: error,
+        });
+      }
+    },
+    [toast]
+  );
 
   const { isScanning, toggleScanner } = useQRCodeScanner({
     onResult: handleScanResult,
@@ -81,7 +85,7 @@ export function PackageScan() {
     e.preventDefault();
     if (manualCode) {
       setQrCode(manualCode);
-      setManualCode('');
+      setManualCode("");
     }
   };
 
@@ -95,24 +99,24 @@ export function PackageScan() {
       });
 
       toast({
-        title: 'Encomenda entregue com sucesso!',
-        description: 'A baixa foi registrada no sistema.',
+        title: "Encomenda entregue com sucesso!",
+        description: "A baixa foi registrada no sistema.",
       });
 
       setShowDeliveryDialog(false);
-      setDeliveryNotes('');
+      setDeliveryNotes("");
       setQrCode(null);
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro ao registrar entrega',
-        description: 'Tente novamente em alguns instantes.',
+        variant: "destructive",
+        title: "Erro ao registrar entrega",
+        description: "Tente novamente em alguns instantes.",
       });
     }
   };
 
   const playSuccessSound = () => {
-    const audio = new Audio('/sounds/beep.mp3');
+    const audio = new Audio("/sounds/beep.mp3");
     audio.play().catch(() => {
       // Ignore audio play errors
     });
@@ -120,14 +124,14 @@ export function PackageScan() {
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'KeyQ' && e.ctrlKey) {
-        toggleScanner('qr-reader');
+      if (e.code === "KeyQ" && e.ctrlKey) {
+        toggleScanner("qr-reader");
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
+    window.addEventListener("keydown", handleKeyPress);
     return () => {
-      window.removeEventListener('keydown', handleKeyPress);
+      window.removeEventListener("keydown", handleKeyPress);
     };
   }, [toggleScanner]);
 
@@ -168,9 +172,9 @@ export function PackageScan() {
             </div>
 
             <Button
-              onClick={() => toggleScanner('qr-reader')}
+              onClick={() => toggleScanner("qr-reader")}
               className="w-full"
-              variant={isScanning ? 'destructive' : 'default'}
+              variant={isScanning ? "destructive" : "default"}
             >
               {isScanning ? (
                 <>
@@ -223,8 +227,8 @@ export function PackageScan() {
                     </span>
                   </div>
                   <p className="font-medium">
-                    {package_.apartment.building.name} - Apto{' '}
-                    {package_.apartment.number}
+                    {package_?.apartment?.building?.name} - Apto{" "}
+                    {package_?.apartment?.number}
                   </p>
                 </div>
 
@@ -236,9 +240,13 @@ export function PackageScan() {
                     </span>
                   </div>
                   <p className="font-medium">
-                    {format(new Date(package_.received_at), "dd/MM/yyyy 'às' HH:mm", {
-                      locale: ptBR,
-                    })}
+                    {format(
+                      new Date(package_.received_at),
+                      "dd/MM/yyyy 'às' HH:mm",
+                      {
+                        locale: ptBR,
+                      }
+                    )}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {formatDistanceToNow(new Date(package_.received_at), {
@@ -251,7 +259,9 @@ export function PackageScan() {
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Porteiro</span>
+                    <span className="text-sm text-muted-foreground">
+                      Porteiro
+                    </span>
                   </div>
                   <p className="font-medium">{package_.doorman_name}</p>
                 </div>
@@ -259,16 +269,20 @@ export function PackageScan() {
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <Package className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Status</span>
+                    <span className="text-sm text-muted-foreground">
+                      Status
+                    </span>
                   </div>
                   <Badge
-                    variant={package_.status === 'delivered' ? 'default' : 'secondary'}
+                    variant={
+                      package_.status === "delivered" ? "default" : "secondary"
+                    }
                   >
-                    {package_.status === 'delivered' ? 'Entregue' : 'Pendente'}
+                    {package_.status === "delivered" ? "Entregue" : "Pendente"}
                   </Badge>
                 </div>
 
-                {package_.status === 'pending' && (
+                {package_.status === "pending" && (
                   <Button
                     className="w-full"
                     onClick={() => setShowDeliveryDialog(true)}
@@ -322,8 +336,8 @@ export function PackageScan() {
                 >
                   <div>
                     <p className="font-medium">
-                      {delivery.apartment.building.name} - Apto{' '}
-                      {delivery.apartment.number}
+                      {delivery?.apartment?.building?.name} - Apto{" "}
+                      {delivery?.apartment?.number}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {format(
@@ -366,8 +380,8 @@ export function PackageScan() {
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Torre/Apartamento</p>
                   <p className="text-sm text-muted-foreground">
-                    {package_.apartment.building.name} - Apto{' '}
-                    {package_.apartment.number}
+                    {package_?.apartment?.building?.name} - Apto{" "}
+                    {package_?.apartment?.number}
                   </p>
                 </div>
 
@@ -423,14 +437,14 @@ export function PackageScan() {
               <div key={delivery.id} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="font-medium">
-                    {delivery.apartment.building.name} - Apto{' '}
-                    {delivery.apartment.number}
+                    {delivery?.apartment?.building?.name} - Apto{" "}
+                    {delivery?.apartment?.number}
                   </p>
                   <Badge>Entregue</Badge>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">
-                    Entregue em:{' '}
+                    Entregue em:{" "}
                     {format(
                       new Date(delivery.delivered_at!),
                       "dd/MM/yyyy 'às' HH:mm",

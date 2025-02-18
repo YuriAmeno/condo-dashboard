@@ -30,14 +30,13 @@ interface UpdateApartmentData {
 export function useApartmentManagement(buildingId: string | null) {
   const queryClient = useQueryClient();
   const userTypeQuery = useUserType();
-  console.log("BIULD", buildingId);
 
   const query = useQuery({
     queryKey: ["apartments-with-details", buildingId],
     queryFn: async () => {
       if (!buildingId) return [];
       const userType = await userTypeQuery.data;
-      const { data, error } = await supabase
+      let query = supabase
         .from("apartments")
         .select(
           `
@@ -48,9 +47,33 @@ export function useApartmentManagement(buildingId: string | null) {
         `
         )
         .eq("building_id", buildingId)
-        .eq("user_id", userType)
 
         .order("number");
+
+      if (userType?.type === "manager") {
+        const { data: doormen, error: doormenError } = await supabase
+          .from("doormen")
+          .select("user_id")
+          .eq("manager_id", userType.managerId);
+
+        if (doormenError) {
+          console.error("Error fetching doormen:", doormenError);
+          return null;
+        }
+
+        const doormenIds = doormen.map((d) => d.user_id);
+        doormenIds.push(userType.relatedId);
+        console.log(doormenIds);
+
+        query = query.in("user_id", doormenIds);
+      } else {
+        query = query.in("user_id", [
+          userType?.relatedId,
+          userType?.doormanUserId,
+        ]);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

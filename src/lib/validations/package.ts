@@ -1,17 +1,17 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const packageSchema = z.object({
   building_id: z.string({
-    required_error: 'Selecione uma torre',
+    required_error: "Selecione uma torre",
   }),
   apartment_id: z.string({
-    required_error: 'Selecione um apartamento',
+    required_error: "Selecione um apartamento",
   }),
   resident_id: z.string({
-    required_error: 'Selecione um morador',
+    required_error: "Selecione um morador",
   }),
-  delivery_company: z.string().min(1, 'Empresa de entrega é obrigatória'),
-  store_name: z.string().min(1, 'Nome da loja é obrigatório'),
+  delivery_company: z.string().min(1, "Empresa de entrega é obrigatória"),
+  store_name: z.string().min(1, "Nome da loja é obrigatório"),
   notes: z.string().optional(),
   storage_location: z.string().optional(),
 });

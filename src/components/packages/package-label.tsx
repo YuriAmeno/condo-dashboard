@@ -20,7 +20,7 @@ export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
       <div
         ref={ref}
         className={cn(
-          "w-[300px] p-4 rounded-lg border shadow-sm",
+          "w-[400px] p-4 rounded-lg border shadow-sm",
           "bg-background text-foreground",
           className
         )}

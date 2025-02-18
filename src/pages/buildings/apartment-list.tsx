@@ -63,6 +63,7 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
         title: "Apartamento criado",
         description: "O apartamento foi criado com sucesso.",
       });
+      window.location.reload();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -178,32 +179,32 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          <X className="mr-2 h-4 w-8" />
-                        </DropdownMenuItem>
-                      </DialogTrigger>
-                      <DialogContent
-                        hidden={
-                          user?.user_metadata?.role == "doorman" ? true : false
-                        }
-                      >
-                        <DialogHeader>
-                          <DialogTitle>Deletar Torre</DialogTitle>
-                          <DialogDescription>
-                            Tem certeza que deseja deletar a torre ?
-                          </DialogDescription>
-                        </DialogHeader>
-                        <Button
-                          type="button"
-                          className="w-full"
-                          onClick={() => handleDeleteApartment(apartment.id)}
-                        >
-                          Deletar Apartamento
-                        </Button>
-                      </DialogContent>
-                    </Dialog>
+                    {user?.user_metadata?.role !== "doorman" && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            <X className="mr-2 h-4 w-8" />
+                          </DropdownMenuItem>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Deletar Torre</DialogTitle>
+                            <DialogDescription>
+                              Tem certeza que deseja deletar a torre ?
+                            </DialogDescription>
+                          </DialogHeader>
+                          <Button
+                            type="button"
+                            className="w-full"
+                            onClick={() => handleDeleteApartment(apartment.id)}
+                          >
+                            Deletar Apartamento
+                          </Button>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </TableCell>
                 </TableRow>
               );

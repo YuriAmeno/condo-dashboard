@@ -41,7 +41,7 @@ export function useResidents() {
           packages:packages (*)
         `
         )
-        .eq("apartment.building.user_id", userType)
+        .eq("apartment.building.user_id", userType?.relatedId)
         .order("name");
 
       if (error) {

@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PackageLabel } from "@/components/packages/package-label";
+import { useUserType } from "@/hooks/queryUser";
 
 export function PackageRegister() {
   const [showLabel, setShowLabel] = useState(false);
@@ -59,7 +60,7 @@ export function PackageRegister() {
 
   const { data: buildings } = useBuildingsList();
   const { data: apartments } = useApartments(form.watch("building_id"));
-  const { data: residents } = useResidents();
+  const { residents } = useResidents();
 
   // Filtrar residentes pelo apartamento selecionado
   const filteredResidents = residents?.filter(

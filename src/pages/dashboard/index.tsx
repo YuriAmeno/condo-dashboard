@@ -93,6 +93,8 @@ export function Dashboard() {
   };
 
   const COLORS = ["#FF8042", "#00C49F"];
+
+  console.log(`METRICCS`, metrics);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -174,7 +176,7 @@ export function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {metrics?.storageOccupation.toFixed(1)}%
+                  {metrics?.storageOccupation.toFixed(0)}%
                 </div>
                 <Progress
                   value={metrics?.storageOccupation ?? 0}
