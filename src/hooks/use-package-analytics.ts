@@ -58,12 +58,30 @@ export function usePackageAnalytics(period: string, apartment?: any) {
           )
         `
         )
-        .eq("apartment.user_id", userType?.relatedId)
+
         .gte("created_at", start.toISOString())
         .lt("created_at", end.toISOString());
 
-      if (apartment) {
-        query = query.eq("apartment.building.id", apartment);
+      if (userType?.type === "manager") {
+        const { data: doormen, error: doormenError } = await supabase
+          .from("doormen")
+          .select("user_id")
+          .eq("manager_id", userType.managerId);
+
+        if (doormenError) {
+          console.error("Error fetching doormen:", doormenError);
+          return null;
+        }
+
+        const doormenIds = doormen.map((d) => d.user_id);
+        doormenIds.push(userType.relatedId);
+
+        query = query.in("apartment.building.user_id", doormenIds);
+      } else {
+        query = query.in("apartment.building.user_id", [
+          userType?.relatedId,
+          userType?.doormanUserId,
+        ]);
       }
 
       const { data: packages, error } = await query;

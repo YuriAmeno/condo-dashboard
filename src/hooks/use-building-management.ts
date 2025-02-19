@@ -4,8 +4,6 @@ import type { Database } from "@/types/supabase";
 import { useUserType } from "./queryUser";
 
 type Building = Database["public"]["Tables"]["buildings"]["Row"];
-type BuildingCreate = Database["public"]["Tables"]["buildings"]["Insert"];
-type BuildingUpdate = Database["public"]["Tables"]["buildings"]["Update"];
 
 interface BuildingWithStats extends Building {
   total_apartments: number;

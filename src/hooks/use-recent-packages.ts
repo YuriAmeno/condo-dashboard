@@ -17,8 +17,7 @@ export function useRecentPackages(period: string, apartment?: any) {
   return useQuery({
     queryKey: ["recent-packages", period, apartment],
     queryFn: async () => {
-      const userType = await userTypeQuery.data;
-      if (!userType) return [];
+      const userType = userTypeQuery.data;
 
       const { start, end } = getDaysPeriod(period);
 
@@ -33,14 +32,34 @@ export function useRecentPackages(period: string, apartment?: any) {
         )
         `
         )
-        .eq("apartment.user_id", userType?.relatedId)
+
         .gte("created_at", start.toISOString())
         .lt("created_at", end.toISOString())
         .order("created_at", { ascending: false })
         .limit(limit);
 
-      if (apartment) {
-        query = query.eq("apartment.building.id", apartment);
+      if (userType?.type === "manager") {
+        const { data: doormen, error: doormenError } = await supabase
+          .from("doormen")
+          .select("user_id")
+          .eq("manager_id", userType.managerId);
+
+        if (doormenError) {
+          console.error("Error fetching doormen:", doormenError);
+          return null;
+        }
+
+        if (doormen) {
+          const doormenIds = doormen.map((d) => d.user_id);
+          doormenIds.push(userType.relatedId);
+
+          query = query.in("apartment.building.user_id", doormenIds);
+        }
+      } else {
+        query = query.in("apartment.building.user_id", [
+          userType?.relatedId,
+          userType?.doormanUserId,
+        ]);
       }
 
       const { data: packages, error } = await query;
@@ -49,7 +68,7 @@ export function useRecentPackages(period: string, apartment?: any) {
       return packages as Package[];
     },
     refetchInterval: 30 * 1000,
-    enabled: !!userTypeQuery.data?.relatedId,
+    enabled: !!userTypeQuery.data,
   });
 }
 

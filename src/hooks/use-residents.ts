@@ -29,7 +29,7 @@ export function useResidents() {
     queryKey: ["residents", user?.id],
     queryFn: async () => {
       const userType = userTypeQuery.data;
-      const { data, error } = await supabase
+      let query = supabase
         .from("residents")
         .select(
           `
@@ -41,8 +41,31 @@ export function useResidents() {
           packages:packages (*)
         `
         )
-        .eq("apartment.building.user_id", userType?.relatedId)
         .order("name");
+
+      if (userType?.type === "manager") {
+        const { data: doormen, error: doormenError } = await supabase
+          .from("doormen")
+          .select("user_id")
+          .eq("manager_id", userType.managerId);
+
+        if (doormenError) {
+          console.error("Error fetching doormen:", doormenError);
+          return null;
+        }
+
+        const doormenIds = doormen.map((d) => d.user_id);
+        doormenIds.push(userType.relatedId);
+
+        query = query.in("apartment.building.user_id", doormenIds);
+      } else {
+        query = query.in("apartment.building.user_id", [
+          userType?.relatedId,
+          userType?.doormanUserId,
+        ]);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching residents:", error);

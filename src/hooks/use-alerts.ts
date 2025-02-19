@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { Database } from "@/types/supabase";
 import { getDaysPeriod } from "@/helpers/filterDashboard";
 import { useUserType } from "./queryUser";
+import moment from "moment";
 
 type Package = Database["public"]["Tables"]["packages"]["Row"] & {
   apartment: Database["public"]["Tables"]["apartments"]["Row"] & {
@@ -18,106 +19,101 @@ interface Alert {
   createdAt: string;
 }
 
+const getPendingTime = (receivedAt: string) => {
+  const duration = moment.duration(moment().diff(moment(receivedAt)));
+
+  if (duration.days() > 0) return `${duration.days()} dia(s)`;
+  if (duration.hours() > 0) return `${duration.hours()} hora(s)`;
+  return `${duration.minutes()} minuto(s)`;
+};
+
 export function useAlerts(period: string, apartment?: any) {
   const userTypeQuery = useUserType();
   return useQuery({
     queryKey: ["alerts", period, apartment],
     queryFn: async () => {
-      try {
-        const alerts: Alert[] = [];
-        const userType = await userTypeQuery.data;
+      const alerts: Alert[] = [];
+      const userType = userTypeQuery.data;
 
-        const { start, end } = getDaysPeriod(period);
+      const { start, end } = getDaysPeriod(period);
 
-        let query = supabase
-          .from("packages")
-          .select(
-            `
+      let query = supabase
+        .from("packages")
+        .select(
+          `
           *,
-          apartment:apartments (
-            *,
-            building:buildings (*)
-          )
+          apartment:apartments (*,building:buildings (*)),
+           resident:residents(*)
         `
-          )
-          .eq("status", "pending")
-          .eq("created_by_user_id", userType?.relatedId)
-          .gte("received_at", start.toISOString())
-          .lt("received_at", end.toISOString());
+        )
+        .eq("status", "pending")
+        .gte("received_at", start.toISOString())
+        .lt("received_at", end.toISOString());
 
-        if (userType?.type === "manager") {
-          const { data: doormen, error: doormenError } = await supabase
-            .from("doormen")
-            .select("user_id")
-            .eq("manager_id", userType.relatedId);
+      if (userType?.type === "manager") {
+        const { data: doormen, error: doormenError } = await supabase
+          .from("doormen")
+          .select("user_id")
+          .eq("manager_id", userType.managerId);
 
-          if (doormenError) {
-            console.error("Error fetching doormen:", doormenError);
-            return null;
-          }
-
-          const doormenIds = doormen.map((d) => d.user_id);
-          doormenIds.push(userType.relatedId);
-
-          query = query.in("apartment.user_id", doormenIds);
-        } else {
-          query = query.in("apartment.user_id", [
-            userType?.relatedId,
-            userType?.doormanUserId,
-          ]);
+        if (doormenError) {
+          console.error("Error fetching doormen:", doormenError);
+          return null;
         }
 
-        try {
-          const { data: pendingPackages, error: pendingError } = await query;
-          if (pendingError) throw pendingError;
+        const doormenIds = doormen.map((d) => d.user_id);
+        doormenIds.push(userType.relatedId);
 
-          console.log("PENDING PACKAGES RECEIVED:", pendingPackages);
+        query = query.in("apartment.building.user_id", doormenIds);
+      } else {
+        query = query.in("apartment.building.user_id", [
+          userType?.relatedId,
+          userType?.doormanUserId,
+        ]);
+      }
 
-          if (!pendingPackages || pendingPackages.length === 0) {
-            console.log("No pending packages found.");
-            return [];
-          }
+      const { data: pendingPackages, error: pendingError } = await query;
+      if (pendingError) throw pendingError;
 
-          const newAlerts = pendingPackages.map((pkg) => ({
-            id: `delayed-${pkg.id}`,
-            type: "delayed",
-            message: `Encomenda para ${pkg.apartment?.building?.name} - ${pkg?.apartment?.number} aguardando retirada há mais de 7 dias`,
-            package: pkg as Package,
-            createdAt: new Date().toISOString(),
-          }));
-
-          alerts.push(...newAlerts);
-          console.log("ALERTS AFTER MAPPING:", alerts);
-
-          const storageCapacity = 100; // Example capacity
-          const currentOccupation = pendingPackages?.length || 0;
-          const occupationPercentage =
-            (currentOccupation / storageCapacity) * 100;
-
-          if (occupationPercentage > 80) {
-            alerts.push({
-              id: "storage-critical",
-              type: "storage",
-              message: `Armazenamento crítico: ${occupationPercentage.toFixed(
-                1
-              )}% da capacidade utilizada`,
-              createdAt: new Date().toISOString(),
-            });
-          }
-
-          console.log("FINAL ALERTS:", alerts);
-          return alerts.sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        } catch (err) {
-          console.error("Error processing alerts:", err);
-          return [];
-        }
-      } catch (err) {
-        console.error("ERROR IN ALERT FUNCTION:", err);
+      if (!pendingPackages || pendingPackages.length === 0) {
+        console.log("No pending packages found.");
         return [];
       }
+
+      const newAlerts = pendingPackages.map((pkg) => {
+        const pendingTime = getPendingTime(pkg.received_at);
+
+        let dta = {
+          id: `delayed-${pkg.id}`,
+          type: "delayed",
+          message: `Encomenda para ${pkg.resident?.name} / ${pkg.apartment?.building?.name} - ${pkg?.apartment?.number} aguardando retirada há mais de ${pendingTime}`,
+          package: pkg as Package,
+          createdAt: new Date().toISOString(),
+        };
+        return dta;
+      });
+
+      alerts.push(...newAlerts);
+
+      const storageCapacity = 100;
+      const currentOccupation = pendingPackages?.length || 0;
+      const occupationPercentage = (currentOccupation / storageCapacity) * 100;
+
+      if (occupationPercentage > 80) {
+        alerts.push({
+          id: "storage-critical",
+          type: "storage",
+          message: `Armazenamento crítico: ${occupationPercentage.toFixed(
+            1
+          )}% da capacidade utilizada`,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      return alerts.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     },
     refetchInterval: 5 * 60 * 1000, // 5 minutes
     enabled: !userTypeQuery.isLoading,

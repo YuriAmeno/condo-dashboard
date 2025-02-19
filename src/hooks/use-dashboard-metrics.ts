@@ -22,7 +22,6 @@ export const useDashboardMetrics = (period: string, apartment?: any) => {
     queryKey: ["dashboard-metrics", period, apartment],
     queryFn: async () => {
       const today = startOfDay(new Date());
-      const thirtyDaysAgo = subDays(today, 30);
       const userType = userTypeQuery.data;
 
       const { start, end } = getDaysPeriod(period);
@@ -32,6 +31,7 @@ export const useDashboardMetrics = (period: string, apartment?: any) => {
         .select(
           `*,apartment:apartments!inner(
           id,
+          user_id,
           building:buildings(*)
         )`
         )
@@ -42,7 +42,7 @@ export const useDashboardMetrics = (period: string, apartment?: any) => {
         const { data: doormen, error: doormenError } = await supabase
           .from("doormen")
           .select("user_id")
-          .eq("manager_id", userType.relatedId);
+          .eq("manager_id", userType.managerId);
 
         if (doormenError) {
           console.error("Error fetching doormen:", doormenError);
@@ -52,9 +52,9 @@ export const useDashboardMetrics = (period: string, apartment?: any) => {
         const doormenIds = doormen.map((d) => d.user_id);
         doormenIds.push(userType.relatedId);
 
-        query = query.in("apartment.user_id", doormenIds);
+        query = query.in("apartment.building.user_id", doormenIds);
       } else {
-        query = query.in("apartment.user_id", [
+        query = query.in("apartment.building.user_id", [
           userType?.relatedId,
           userType?.doormanUserId,
         ]);
@@ -74,17 +74,13 @@ export const useDashboardMetrics = (period: string, apartment?: any) => {
           isAfter(new Date(p.delivered_at), today)
       );
 
-      // Filter delayed packages (pending for more than 7 days)
       const delayedPackages = pendingPackages.filter((p) =>
-        isAfter(today, subDays(new Date(p.received_at), 7))
+        isAfter(subDays(today, 7), new Date(p.received_at))
       );
 
       // Calculate average pickup time (last 30 days)
       const recentDeliveries = packages.filter(
-        (p) =>
-          p.status === "delivered" &&
-          p.delivered_at &&
-          isAfter(new Date(p.delivered_at), thirtyDaysAgo)
+        (p) => p.status === "delivered" && p.delivered_at
       );
 
       const totalPickupTime = recentDeliveries.reduce((acc, p) => {
