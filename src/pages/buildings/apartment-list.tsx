@@ -63,6 +63,7 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
         title: "Apartamento criado",
         description: "O apartamento foi criado com sucesso.",
       });
+      window.location.reload();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -90,11 +91,12 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
   };
 
   return (
-    <div className="space-y-4 w-[650px]">
-      <div className="flex justify-start">
+    <div className="space-y-4 max-w-[650px]">
+      {/* Cabeçalho Responsivo */}
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
         <Dialog>
           <DialogTrigger asChild>
-            <Button>
+            <Button size="sm">
               <Plus className="mr-2 h-4 w-4" />
               Novo Apartamento
             </Button>
@@ -111,105 +113,108 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
         </Dialog>
       </div>
 
+      {/* Listagem Responsiva */}
       {isLoading ? (
         <div className="flex items-center justify-center h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Número</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Moradores</TableHead>
-              <TableHead>Encomendas Pendentes</TableHead>
-              <TableHead>Última Entrega</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {apartments?.map((apartment) => {
-              const pendingPackages = apartment.packages?.filter(
-                (p) => p.status === "pending"
-              );
-              const lastPackage = apartment.packages
-                ?.sort(
-                  (a, b) =>
-                    new Date(b.received_at).getTime() -
-                    new Date(a.received_at).getTime()
-                )
-                .at(0);
+        <div className="overflow-x-auto">
+          <Table className="min-w-[600px] sm:min-w-full">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Número</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Moradores</TableHead>
+                <TableHead>Encomendas</TableHead>
+                <TableHead>Última Entrega</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {apartments?.map((apartment) => {
+                const pendingPackages = apartment.packages?.filter(
+                  (p) => p.status === "pending"
+                );
+                const lastPackage = apartment.packages
+                  ?.sort(
+                    (a, b) =>
+                      new Date(b.received_at).getTime() -
+                      new Date(a.received_at).getTime()
+                  )
+                  .at(0);
 
-              return (
-                <TableRow key={apartment.id}>
-                  <TableCell className="font-medium">
-                    {apartment.number}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        apartment.residents?.length ? "default" : "secondary"
-                      }
-                    >
-                      {apartment.residents?.length ? "Ocupado" : "Vago"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span>{apartment.residents?.length || 0}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      <span>{pendingPackages?.length || 0}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {lastPackage && (
-                      <div className="text-sm text-muted-foreground">
-                        {format(
-                          new Date(lastPackage.received_at),
-                          "dd/MM/yyyy 'às' HH:mm",
-                          { locale: ptBR }
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          <X className="mr-2 h-4 w-8" />
-                        </DropdownMenuItem>
-                      </DialogTrigger>
-                      <DialogContent
-                        hidden={
-                          user?.user_metadata?.role == "doorman" ? true : false
+                return (
+                  <TableRow key={apartment.id}>
+                    <TableCell className="font-medium">
+                      {apartment.number}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          apartment.residents?.length ? "default" : "secondary"
                         }
                       >
-                        <DialogHeader>
-                          <DialogTitle>Deletar Torre</DialogTitle>
-                          <DialogDescription>
-                            Tem certeza que deseja deletar a torre ?
-                          </DialogDescription>
-                        </DialogHeader>
-                        <Button
-                          type="button"
-                          className="w-full"
-                          onClick={() => handleDeleteApartment(apartment.id)}
-                        >
-                          Deletar Apartamento
-                        </Button>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                        {apartment.residents?.length ? "Ocupado" : "Vago"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span>{apartment.residents?.length || 0}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        <span>{pendingPackages?.length || 0}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {lastPackage && (
+                        <div className="text-sm text-muted-foreground">
+                          {format(
+                            new Date(lastPackage.received_at),
+                            "dd/MM/yyyy 'às' HH:mm",
+                            { locale: ptBR }
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {user?.user_metadata?.role !== "doorman" && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Deletar Apartamento</DialogTitle>
+                              <DialogDescription>
+                                Tem certeza que deseja deletar este apartamento?
+                              </DialogDescription>
+                            </DialogHeader>
+                            <Button
+                              type="button"
+                              className="w-full"
+                              onClick={() =>
+                                handleDeleteApartment(apartment.id)
+                              }
+                            >
+                              Deletar Apartamento
+                            </Button>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

@@ -1,11 +1,14 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Package, ArrowLeft, Loader2 } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
-import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/lib/validations/auth';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Package, ArrowLeft, Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordFormData,
+} from "@/lib/validations/auth";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,9 +16,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { adminAuthClient } from "@/lib/supabase";
 
 export function ForgotPassword() {
   const navigate = useNavigate();
@@ -26,7 +30,7 @@ export function ForgotPassword() {
   const form = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
-      email: '',
+      email: "",
     },
   });
 
@@ -36,22 +40,22 @@ export function ForgotPassword() {
       const result = await resetPassword(data.email);
 
       if (result.error) {
-        if (result.error.message.includes('User not found')) {
+        if (result.error.message.includes("User not found")) {
           toast({
-            variant: 'destructive',
-            title: 'Usuário não encontrado',
-            description: 'Não existe uma conta com este email.',
+            variant: "destructive",
+            title: "Usuário não encontrado",
+            description: "Não existe uma conta com este email.",
           });
-        } else if (result.error.message.includes('Email rate limit exceeded')) {
+        } else if (result.error.message.includes("Email rate limit exceeded")) {
           toast({
-            variant: 'destructive',
-            title: 'Muitas tentativas',
-            description: 'Aguarde alguns minutos antes de tentar novamente.',
+            variant: "destructive",
+            title: "Muitas tentativas",
+            description: "Aguarde alguns minutos antes de tentar novamente.",
           });
         } else {
           toast({
-            variant: 'destructive',
-            title: 'Erro ao enviar email',
+            variant: "destructive",
+            title: "Erro ao enviar email",
             description: result.error.message,
           });
         }
@@ -59,15 +63,15 @@ export function ForgotPassword() {
       }
 
       toast({
-        title: 'Email enviado',
-        description: 'Verifique sua caixa de entrada para redefinir sua senha.',
+        title: "Email enviado",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
       });
-      navigate('/auth/login');
+      navigate("/auth/login");
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro inesperado',
-        description: 'Não foi possível enviar o email de recuperação.',
+        variant: "destructive",
+        title: "Erro inesperado",
+        description: "Não foi possível enviar o email de recuperação.",
       });
     } finally {
       setIsLoading(false);
@@ -129,7 +133,7 @@ export function ForgotPassword() {
                     Enviando...
                   </>
                 ) : (
-                  'Enviar Email'
+                  "Enviar Email"
                 )}
               </Button>
             </form>
@@ -138,7 +142,7 @@ export function ForgotPassword() {
           <Button
             variant="link"
             className="flex items-center justify-center"
-            onClick={() => navigate('/auth/login')}
+            onClick={() => navigate("/auth/login")}
             disabled={isLoading}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />

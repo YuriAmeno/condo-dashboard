@@ -1,5 +1,5 @@
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   Package,
   Building2,
@@ -8,24 +8,26 @@ import {
   BellRing,
   Clock,
   User,
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import type { Database } from '@/types/supabase';
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import type { Database } from "@/types/supabase";
+import { applyPhoneMask } from "@/lib/utils";
 
-type Resident = Database['public']['Tables']['residents']['Row'] & {
-  apartment: Database['public']['Tables']['apartments']['Row'] & {
-    building: Database['public']['Tables']['buildings']['Row'];
+type Resident = Database["public"]["Tables"]["residents"]["Row"] & {
+  apartment: Database["public"]["Tables"]["apartments"]["Row"] & {
+    building: Database["public"]["Tables"]["buildings"]["Row"];
   };
   pending_packages?: number;
-  last_package?: Database['public']['Tables']['packages']['Row'];
+  last_package?: Database["public"]["Tables"]["packages"]["Row"];
+  packages?: any;
 };
 
 interface ResidentDetailsProps {
@@ -33,14 +35,24 @@ interface ResidentDetailsProps {
 }
 
 export function ResidentDetails({ resident }: ResidentDetailsProps) {
+  console.log(resident);
+
+  const residentPackageStts: { pending: 0; delivered: 0 } =
+    resident.packages?.reduce(
+      (acc: any, val: any) => {
+        if (val.status === "pending") acc.pending++;
+        if (val.status === "delivered") acc.delivered++;
+        return acc;
+      },
+      { pending: 0, delivered: 0 }
+    );
+
   return (
     <div className="mt-6 space-y-6">
       <div className="space-y-1">
-        <h2 className="text-2xl font-bold tracking-tight">
-          {resident.name}
-        </h2>
+        <h2 className="text-2xl font-bold tracking-tight">{resident.name}</h2>
         <p className="text-muted-foreground">
-          Cadastrado em{' '}
+          Cadastrado em{" "}
           {format(new Date(resident.created_at), "dd 'de' MMMM 'de' yyyy", {
             locale: ptBR,
           })}
@@ -59,7 +71,7 @@ export function ResidentDetails({ resident }: ResidentDetailsProps) {
             <div className="flex items-center space-x-2">
               <Building2 className="h-4 w-4 text-muted-foreground" />
               <span>
-                {resident.apartment.building.name} - Apto{' '}
+                {resident.apartment.building.name} - Apto{" "}
                 {resident.apartment.number}
               </span>
             </div>
@@ -74,7 +86,7 @@ export function ResidentDetails({ resident }: ResidentDetailsProps) {
           <CardContent className="space-y-2">
             <div className="flex items-center space-x-2">
               <Phone className="h-4 w-4 text-muted-foreground" />
-              <span>{resident.phone}</span>
+              <span>{applyPhoneMask(resident.phone)}</span>
             </div>
             <div className="flex items-center space-x-2">
               <Mail className="h-4 w-4 text-muted-foreground" />
@@ -95,33 +107,38 @@ export function ResidentDetails({ resident }: ResidentDetailsProps) {
                 <span>Status</span>
               </div>
               <Badge
-                variant={resident.receive_notifications ? 'default' : 'secondary'}
+                variant={
+                  resident.receive_notifications ? "default" : "secondary"
+                }
               >
-                {resident.receive_notifications ? 'Ativas' : 'Pausadas'}
+                {resident.receive_notifications ? "Ativas" : "Pausadas"}
               </Badge>
             </div>
 
-            {!resident.receive_notifications && resident.notifications_paused_at && (
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>Pausado em</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {format(
-                    new Date(resident.notifications_paused_at),
-                    "dd/MM/yyyy 'às' HH:mm",
-                    { locale: ptBR }
-                  )}
-                </p>
-                {resident.notifications_paused_by && (
+            {!resident.receive_notifications &&
+              resident.notifications_paused_at && (
+                <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span>Pausado por: {resident.notifications_paused_by}</span>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span>Pausado em</span>
                   </div>
-                )}
-              </div>
-            )}
+                  <p className="text-sm text-muted-foreground">
+                    {format(
+                      new Date(resident.notifications_paused_at),
+                      "dd/MM/yyyy 'às' HH:mm",
+                      { locale: ptBR }
+                    )}
+                  </p>
+                  {resident.notifications_paused_by && (
+                    <div className="flex items-center space-x-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        Pausado por: {resident.notifications_paused_by}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
           </CardContent>
         </Card>
 
@@ -136,28 +153,18 @@ export function ResidentDetails({ resident }: ResidentDetailsProps) {
                 <Package className="h-4 w-4 text-muted-foreground" />
                 <span>Pendentes</span>
               </div>
-              <span className="font-bold">{resident.pending_packages ?? 0}</span>
+              <span className="font-bold">{residentPackageStts?.pending}</span>
             </div>
 
-            {resident.last_package && (
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>Última entrega</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {format(
-                    new Date(resident.last_package.received_at),
-                    "dd/MM/yyyy 'às' HH:mm",
-                    { locale: ptBR }
-                  )}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {resident.last_package.delivery_company} -{' '}
-                  {resident.last_package.store_name}
-                </p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Package className="h-4 w-4 text-muted-foreground" />
+                <span>Entregues</span>
               </div>
-            )}
+              <span className="font-bold">
+                {residentPackageStts?.delivered}
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>
