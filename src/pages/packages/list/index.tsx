@@ -164,7 +164,9 @@ export function PackageList() {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell>{pkg.doorman_name}</TableCell>
+                <TableCell>
+                  {pkg.doorman_name ? pkg.doorman_name : "Síndico"}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
