@@ -41,6 +41,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { packageConfirm } from "../core/_requests";
 
 export function PackageScan() {
   const [qrCode, setQrCode] = useState<string | null>(null);
@@ -98,6 +99,14 @@ export function PackageScan() {
         notes: deliveryNotes,
       });
 
+      const dataSendWebHook = {
+        delivery_company: package_.delivery_company,
+        store_name: package_.store_name,
+        resident_id: String(package_.resident_id),
+        package_id: String(package_.id),
+      };
+
+      await packageConfirm(dataSendWebHook);
       toast({
         title: "Encomenda entregue com sucesso!",
         description: "A baixa foi registrada no sistema.",
