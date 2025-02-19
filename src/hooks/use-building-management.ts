@@ -45,7 +45,7 @@ export function useBuildingManagement() {
           )
         `
         )
-        .eq("user_id", userType)
+        .eq("user_id", userType?.relatedId)
         .order("name");
 
       if (buildingsError) throw buildingsError;

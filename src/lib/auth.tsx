@@ -1,9 +1,15 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from './supabase';
-import type { User, AuthError, Session } from '@supabase/supabase-js';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { adminAuthClient, supabase } from "./supabase";
+import type { User, AuthError, Session } from "@supabase/supabase-js";
 
-type UserRole = 'manager' | 'doorman';
+type UserRole = "manager" | "doorman";
 
 interface AuthUser extends User {
   role: UserRole;
@@ -14,7 +20,10 @@ interface AuthContextType {
   user: AuthUser | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   updatePassword: (password: string) => Promise<{ error: AuthError | null }>;
@@ -31,70 +40,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   // Função para verificar permissões
-  const checkPermissions = useCallback((allowedRoles: UserRole[]): boolean => {
-    if (!user) return false;
-    return allowedRoles.includes(user.role);
-  }, [user]);
+  const checkPermissions = useCallback(
+    (allowedRoles: UserRole[]): boolean => {
+      if (!user) return false;
+      return allowedRoles.includes(user.role);
+    },
+    [user]
+  );
 
   // Função para atualizar o último login
   const updateLastLogin = useCallback(async () => {
     try {
-      const { error } = await supabase.rpc('update_user_last_login');
+      const { error } = await supabase.rpc("update_user_last_login");
       if (error) {
-        console.error('Error updating last login:', error);
+        console.error("Error updating last login:", error);
       }
     } catch (error) {
-      console.error('Error updating last login:', error);
+      console.error("Error updating last login:", error);
     }
   }, []);
 
   // Função para processar o usuário
-  const processUser = useCallback(async (currentSession: Session | null) => {
-    if (currentSession?.user) {
-      try {
-        // Obter role e is_active dos metadados do usuário atual
-        const metadata = currentSession.user.user_metadata;
-        const role = metadata?.role || 'doorman';
-        const isActive = metadata?.is_active ?? true;
+  const processUser = useCallback(
+    async (currentSession: Session | null) => {
+      if (currentSession?.user) {
+        try {
+          const metadata = currentSession.user.user_metadata;
+          const role = metadata?.role || "doorman";
+          const isActive = metadata?.is_active ?? true;
 
-        // Atualizar estado com os dados da sessão atual
-        setSession(currentSession);
-        setUser({
-          ...currentSession.user,
-          role,
-          is_active: isActive,
-        });
+          setSession(currentSession);
+          setUser({
+            ...currentSession.user,
+            role,
+            is_active: isActive,
+          });
 
-        // Atualizar último login
-        await updateLastLogin();
+          await updateLastLogin();
 
-        // Redirecionar se estiver em rota de auth
-        if (location.pathname.startsWith('/auth')) {
-          const from = (location.state as any)?.from || '/dashboard';
-          navigate(from, { replace: true });
+          // Avoid redirecting if the user is on the reset password page
+          if (
+            location.pathname.startsWith("/auth") &&
+            !location.pathname.startsWith("/auth/reset-password")
+          ) {
+            const from = (location.state as any)?.from || "/dashboard";
+            navigate(from, { replace: true });
+          }
+        } catch (error) {
+          console.error("Error processing user:", error);
+          setSession(null);
+          setUser(null);
+          navigate("/auth/login", {
+            state: { from: location.pathname },
+            replace: true,
+          });
         }
-      } catch (error) {
-        console.error('Error processing user:', error);
+      } else {
         setSession(null);
         setUser(null);
-        navigate('/auth/login', { 
-          state: { from: location.pathname },
-          replace: true 
-        });
-      }
-    } else {
-      setSession(null);
-      setUser(null);
 
-      // Redirecionar para login se não estiver em rota de auth
-      if (!location.pathname.startsWith('/auth')) {
-        navigate('/auth/login', { 
-          state: { from: location.pathname },
-          replace: true 
-        });
+        if (!location.pathname.startsWith("/auth")) {
+          navigate("/auth/login", {
+            state: { from: location.pathname },
+            replace: true,
+          });
+        }
       }
-    }
-  }, [navigate, location, updateLastLogin]);
+    },
+    [navigate, location, updateLastLogin]
+  );
 
   // Efeito para monitorar mudanças na sessão
   useEffect(() => {
@@ -137,8 +151,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!data.user) {
         return {
           error: {
-            name: 'AuthError',
-            message: 'Não foi possível obter os dados do usuário.',
+            name: "AuthError",
+            message: "Não foi possível obter os dados do usuário.",
           } as AuthError,
         };
       }
@@ -149,18 +163,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase.auth.signOut();
         return {
           error: {
-            name: 'AuthError',
-            message: 'Sua conta está inativa. Entre em contato com o administrador.',
+            name: "AuthError",
+            message:
+              "Sua conta está inativa. Entre em contato com o administrador.",
           } as AuthError,
         };
       }
 
       return { error: null };
     } catch (error) {
-      return { 
+      return {
         error: {
-          name: 'AuthError',
-          message: error instanceof Error ? error.message : 'Erro ao fazer login',
+          name: "AuthError",
+          message:
+            error instanceof Error ? error.message : "Erro ao fazer login",
         } as AuthError,
       };
     }
@@ -171,10 +187,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       return { error };
     } catch (error) {
-      return { 
+      return {
         error: {
-          name: 'AuthError',
-          message: error instanceof Error ? error.message : 'Erro ao fazer logout',
+          name: "AuthError",
+          message:
+            error instanceof Error ? error.message : "Erro ao fazer logout",
         } as AuthError,
       };
     }
@@ -183,14 +200,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${window.location.origin}/auth/reset-password?email=${email}`,
       });
+
       return { error };
     } catch (error) {
-      return { 
+      return {
         error: {
-          name: 'AuthError',
-          message: error instanceof Error ? error.message : 'Erro ao resetar senha',
+          name: "AuthError",
+          message:
+            error instanceof Error ? error.message : "Erro ao resetar senha",
         } as AuthError,
       };
     }
@@ -198,13 +217,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updatePassword = async (password: string) => {
     try {
+      // await adminAuthClient.auth.signInWithPassword();
       const { error } = await supabase.auth.updateUser({ password });
       return { error };
     } catch (error) {
-      return { 
+      return {
         error: {
-          name: 'AuthError',
-          message: error instanceof Error ? error.message : 'Erro ao atualizar senha',
+          name: "AuthError",
+          message:
+            error instanceof Error ? error.message : "Erro ao atualizar senha",
         } as AuthError,
       };
     }
@@ -222,16 +243,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

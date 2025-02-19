@@ -56,7 +56,7 @@ import { ImportDialog } from "./import-dialog";
 import { ResidentForm } from "./resident-form";
 import { NotificationSettings } from "./notification-settings";
 import { ResidentDetails } from "./resident-details";
-import { formatPhoneForDB } from "@/lib/utils";
+import { applyPhoneMask, formatPhoneForDB } from "@/lib/utils";
 import type { Database } from "@/types/supabase";
 import { ResidentFormEdit } from "./resident-form-edit";
 
@@ -245,17 +245,20 @@ export function Residents() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Cabeçalho Responsivo */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center space-x-2">
           <Users className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">Moradores</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Moradores
+          </h1>
         </div>
 
         {isManager && (
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
               <DialogTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" size="sm">
                   <FileUp className="mr-2 h-4 w-4" />
                   Importar
                 </Button>
@@ -271,14 +274,14 @@ export function Residents() {
               </DialogContent>
             </Dialog>
 
-            <Button variant="outline" onClick={handleExport}>
+            <Button variant="outline" size="sm" onClick={handleExport}>
               <FileDown className="mr-2 h-4 w-4" />
               Exportar
             </Button>
 
             <Dialog open={isCreating} onOpenChange={setIsCreating}>
               <DialogTrigger asChild>
-                <Button>
+                <Button size="sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Novo Morador
                 </Button>
@@ -297,14 +300,15 @@ export function Residents() {
         )}
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="flex items-center space-x-2">
+      {/* Filtros Responsivos */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar moradores..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 w-[250px]"
+            className="h-9 w-full sm:w-[250px]"
           />
         </div>
 
@@ -314,7 +318,7 @@ export function Residents() {
             setBuildingFilter(value as typeof buildingFilter)
           }
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Filtrar por torre" />
           </SelectTrigger>
           <SelectContent>
@@ -328,110 +332,89 @@ export function Residents() {
         </Select>
       </div>
 
+      {/* Tabela Responsiva */}
       {isLoading ? (
         <div className="flex items-center justify-center h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Apartamento</TableHead>
-              <TableHead>Contatos</TableHead>
-              <TableHead>Notificações</TableHead>
-              <TableHead>Encomendas</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredResidents?.map((resident) => (
-              <TableRow key={resident.id}>
-                <TableCell className="font-medium">{resident.name}</TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span>
-                      {resident.apartment.building.name} -{" "}
-                      {resident.apartment.number}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <p className="text-sm">{resident.phone}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {resident.email}
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      resident.receive_notifications ? "default" : "secondary"
-                    }
-                  >
-                    {resident.receive_notifications ? "Ativas" : "Pausadas"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Package className="h-4 w-4 text-muted-foreground" />
-                    <span>
-                      {resident.packages?.filter((p) => p.status === "pending")
-                        .length || 0}{" "}
-                      pendentes
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Sheet>
-                      <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Users className="h-4 w-4" />
-                        </Button>
-                      </SheetTrigger>
-                      <SheetContent
-                        side="right"
-                        className="w-[800px] sm:w-[800px]"
-                      >
-                        <SheetHeader>
-                          <SheetTitle>Detalhes do Morador</SheetTitle>
-                          <SheetDescription>
-                            Informações completas do morador.
-                          </SheetDescription>
-                        </SheetHeader>
-                        <ResidentDetails resident={resident} />
-                      </SheetContent>
-                    </Sheet>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[600px] sm:min-w-full">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Apartamento</TableHead>
+                <TableHead>Contatos</TableHead>
+                <TableHead>Notificações</TableHead>
+                <TableHead>Encomendas</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredResidents?.map((resident) => (
+                <TableRow key={resident.id}>
+                  <TableCell className="font-medium">{resident.name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {resident.apartment.building.name} -{" "}
+                        {resident.apartment.number}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <p className="text-sm">
+                        {applyPhoneMask(resident.phone)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {resident.email}
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        resident.receive_notifications ? "default" : "secondary"
+                      }
+                    >
+                      {resident.receive_notifications ? "Ativas" : "Pausadas"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <span>{resident.packages?.length || 0}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      <Sheet>
+                        <SheetTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <Users className="h-4 w-4" />
+                          </Button>
+                        </SheetTrigger>
+                        <SheetContent
+                          side="right"
+                          className="w-[90%] sm:w-[800px]"
+                        >
+                          <SheetHeader>
+                            <SheetTitle>Detalhes do Morador</SheetTitle>
+                            <SheetDescription>
+                              Informações completas do morador.
+                            </SheetDescription>
+                          </SheetHeader>
+                          <ResidentDetails resident={resident} />
+                        </SheetContent>
+                      </Sheet>
 
-                    <Sheet>
-                      <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <BellRing className="h-4 w-4" />
-                        </Button>
-                      </SheetTrigger>
-                      <SheetContent
-                        side="right"
-                        className="w-[800px] sm:w-[800px]"
-                      >
-                        <SheetHeader>
-                          <SheetTitle>Notificações</SheetTitle>
-                          <SheetDescription>
-                            Gerenciar notificações do morador.
-                          </SheetDescription>
-                        </SheetHeader>
-                        <NotificationSettings resident={resident} />
-                      </SheetContent>
-                    </Sheet>
-
-                    {isManager && (
-                      <>
-                        <div>
+                      {isManager && (
+                        <>
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="sm">
                                 <Edit className="h-4 w-4" />
                               </Button>
                             </DialogTrigger>
@@ -453,7 +436,7 @@ export function Residents() {
 
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="sm">
                                 <X className="h-4 w-4" />
                               </Button>
                             </DialogTrigger>
@@ -461,7 +444,7 @@ export function Residents() {
                               <DialogHeader>
                                 <DialogTitle>Deletar Morador</DialogTitle>
                                 <DialogDescription>
-                                  Tem certeza que deseja deletar o morador ?
+                                  Tem certeza que deseja deletar o morador?
                                 </DialogDescription>
                               </DialogHeader>
                               <Button
@@ -471,19 +454,19 @@ export function Residents() {
                                   handleDeleteResident(resident.id)
                                 }
                               >
-                                {"Deletar Morador"}
+                                Deletar Morador
                               </Button>
                             </DialogContent>
                           </Dialog>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

@@ -1,9 +1,9 @@
-import { MessageSquare, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useNotificationQueue } from '@/hooks/use-notification-queue';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { MessageSquare, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useNotificationQueue } from "@/hooks/use-notification-queue";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -11,15 +11,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
+import { applyPhoneMask } from "@/lib/utils";
 
 const statusMap = {
-  pending: { label: 'Pendente', variant: 'secondary' },
-  sending: { label: 'Enviando', variant: 'secondary' },
-  sent: { label: 'Enviado', variant: 'default' },
-  delivered: { label: 'Entregue', variant: 'default' },
-  read: { label: 'Lido', variant: 'default' },
-  failed: { label: 'Falhou', variant: 'destructive' },
+  pending: { label: "Pendente", variant: "secondary" },
+  sending: { label: "Enviando", variant: "secondary" },
+  sent: { label: "Enviado", variant: "default" },
+  delivered: { label: "Entregue", variant: "default" },
+  read: { label: "Lido", variant: "default" },
+  failed: { label: "Falhou", variant: "destructive" },
 } as const;
 
 export function NotificationQueue() {
@@ -58,15 +59,19 @@ export function NotificationQueue() {
                 {queue?.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
-                      {format(new Date(item.scheduled_for), "dd/MM/yyyy 'às' HH:mm", {
-                        locale: ptBR,
-                      })}
+                      {format(
+                        new Date(item.scheduled_for),
+                        "dd/MM/yyyy 'às' HH:mm",
+                        {
+                          locale: ptBR,
+                        }
+                      )}
                     </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium">{item.resident.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {item.resident.phone}
+                          {applyPhoneMask(item.resident.phone)}
                         </p>
                       </div>
                     </TableCell>
@@ -82,9 +87,13 @@ export function NotificationQueue() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {format(new Date(item.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                        locale: ptBR,
-                      })}
+                      {format(
+                        new Date(item.created_at),
+                        "dd/MM/yyyy 'às' HH:mm",
+                        {
+                          locale: ptBR,
+                        }
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

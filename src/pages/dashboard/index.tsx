@@ -84,7 +84,6 @@ export function Dashboard() {
     if (!dateString) return "";
     try {
       const date = new Date(dateString);
-      // Check if date is valid
       if (isNaN(date.getTime())) return "";
       return formatDistanceToNow(date, { locale: ptBR, addSuffix: true });
     } catch (error) {
@@ -93,6 +92,7 @@ export function Dashboard() {
   };
 
   const COLORS = ["#FF8042", "#00C49F"];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -127,14 +127,6 @@ export function Dashboard() {
               ))}
             </SelectContent>
           </Select>
-
-          <Button
-            variant={autoRefresh ? "default" : "outline"}
-            onClick={() => setAutoRefresh(!autoRefresh)}
-          >
-            <Icons.RefreshCw className="mr-2 h-4 w-4" />
-            Atualização Automática
-          </Button>
         </div>
       </div>
 
@@ -174,7 +166,7 @@ export function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {metrics?.storageOccupation.toFixed(1)}%
+                  {metrics?.storageOccupation.toFixed(0)}%
                 </div>
                 <Progress
                   value={metrics?.storageOccupation ?? 0}
@@ -233,36 +225,46 @@ export function Dashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Tempo</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentPackages?.map((pkg) => (
-                    <TableRow key={pkg.id}>
-                      <TableCell>{pkg.id}</TableCell>
-                      <TableCell>
-                        {pkg.delivery_company} - {pkg.store_name}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            pkg.status === "delivered" ? "default" : "secondary"
-                          }
-                        >
-                          {pkg.status === "delivered" ? "Entregue" : "Pendente"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatDate(pkg.created_at)}</TableCell>
+              {recentPackages?.length == 0 ? (
+                <h1 className="text-center fw-bold">
+                  Nenhum pacote encontrado
+                </h1>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Tempo</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {recentPackages?.map((pkg) => (
+                      <TableRow key={pkg.id}>
+                        <TableCell>{pkg.id}</TableCell>
+                        <TableCell>
+                          {pkg.delivery_company} - {pkg.store_name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              pkg.status === "delivered"
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {pkg.status === "delivered"
+                              ? "Entregue"
+                              : "Pendente"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{formatDate(pkg.created_at)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
             <CardFooter>
               <Button
@@ -333,7 +335,6 @@ export function Dashboard() {
                       <TableHead>Status</TableHead>
                       <TableHead>Descrição</TableHead>
                       <TableHead>Data</TableHead>
-                      <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -351,11 +352,6 @@ export function Dashboard() {
                               locale: ptBR,
                             }
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <Button size="sm" variant="outline">
-                            Detalhes
-                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

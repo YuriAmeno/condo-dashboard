@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { Database } from "@/types/supabase";
 import { getDaysPeriod } from "@/helpers/filterDashboard";
 import { useUserType } from "./queryUser";
+import moment from "moment";
 
 type Package = Database["public"]["Tables"]["packages"]["Row"] & {
   apartment: Database["public"]["Tables"]["apartments"]["Row"] & {
@@ -12,11 +13,19 @@ type Package = Database["public"]["Tables"]["packages"]["Row"] & {
 
 interface Alert {
   id: string;
-  type: "delayed" | "storage" | "notification" | "priority";
+  type: "delayed" | "storage" | "notification" | "priority" | string;
   message: string;
   package?: Package;
   createdAt: string;
 }
+
+const getPendingTime = (receivedAt: string) => {
+  const duration = moment.duration(moment().diff(moment(receivedAt)));
+
+  if (duration.days() > 0) return `${duration.days()} dia(s)`;
+  if (duration.hours() > 0) return `${duration.hours()} hora(s)`;
+  return `${duration.minutes()} minuto(s)`;
+};
 
 export function useAlerts(period: string, apartment?: any) {
   const userTypeQuery = useUserType();
@@ -24,7 +33,7 @@ export function useAlerts(period: string, apartment?: any) {
     queryKey: ["alerts", period, apartment],
     queryFn: async () => {
       const alerts: Alert[] = [];
-      const userType = await userTypeQuery.data;
+      const userType = userTypeQuery.data;
 
       const { start, end } = getDaysPeriod(period);
 
@@ -33,56 +42,60 @@ export function useAlerts(period: string, apartment?: any) {
         .select(
           `
           *,
-          apartment:apartments (
-            *,
-            building:buildings (*)
-          )
+          apartment:apartments (*,building:buildings (*)),
+           resident:residents(*)
         `
         )
         .eq("status", "pending")
-        .eq("created_by_user_id", userType)
         .gte("received_at", start.toISOString())
-        .lt("received_at", end.toISOString())
-        .gte("created_at", start.toISOString())
-        .lt("created_at", end.toISOString());
+        .lt("received_at", end.toISOString());
 
-      if (apartment) {
-        query = query.eq("apartment.id", apartment);
+      if (userType?.type === "manager") {
+        const { data: doormen, error: doormenError } = await supabase
+          .from("doormen")
+          .select("user_id")
+          .eq("manager_id", userType.managerId);
+
+        if (doormenError) {
+          console.error("Error fetching doormen:", doormenError);
+          return null;
+        }
+
+        const doormenIds = doormen.map((d) => d.user_id);
+        doormenIds.push(userType.relatedId);
+
+        query = query.in("apartment.building.user_id", doormenIds);
+      } else {
+        query = query.in("apartment.building.user_id", [
+          userType?.relatedId,
+          userType?.doormanUserId,
+        ]);
       }
 
-      const { data: delayedPackages, error: delayedError } = await query;
-
-      if (delayedError) throw delayedError;
-
-      delayedPackages?.forEach((pkg) => {
-        alerts.push({
-          id: `delayed-${pkg.id}`,
-          type: "delayed",
-          message: `Encomenda para ${pkg.apartment.building.name} - ${pkg.apartment.number} aguardando retirada há mais de 7 dias`,
-          package: pkg as Package,
-          createdAt: new Date().toISOString(),
-        });
-      });
-
-      // Get storage alerts (>80% capacity)
-      let queryPedingAlert = supabase
-        .from("packages")
-        .select(`*,apartment:apartments (*)`)
-        .eq("status", "pending")
-        .eq("created_by_user_id", userType)
-        .gte("created_at", start.toISOString())
-        .lt("created_at", end.toISOString());
-
-      if (apartment) {
-        queryPedingAlert = queryPedingAlert.eq("apartment.id", apartment);
-      }
-
-      const { data: pendingPackages, error: pendingError } =
-        await queryPedingAlert;
-
+      const { data: pendingPackages, error: pendingError } = await query;
       if (pendingError) throw pendingError;
 
-      const storageCapacity = 100; // Example capacity
+      if (!pendingPackages || pendingPackages.length === 0) {
+        console.log("No pending packages found.");
+        return [];
+      }
+
+      const newAlerts = pendingPackages.map((pkg) => {
+        const pendingTime = getPendingTime(pkg.received_at);
+
+        let dta = {
+          id: `delayed-${pkg.id}`,
+          type: "delayed",
+          message: `Encomenda para ${pkg.resident?.name} / ${pkg.apartment?.building?.name} - ${pkg?.apartment?.number} aguardando retirada há mais de ${pendingTime}`,
+          package: pkg as Package,
+          createdAt: new Date().toISOString(),
+        };
+        return dta;
+      });
+
+      alerts.push(...newAlerts);
+
+      const storageCapacity = 100;
       const currentOccupation = pendingPackages?.length || 0;
       const occupationPercentage = (currentOccupation / storageCapacity) * 100;
 

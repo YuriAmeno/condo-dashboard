@@ -3,7 +3,6 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import type { Database } from "@/types/supabase";
 import { useUserType } from "./queryUser";
-import { getDaysPeriod } from "@/helpers/filterDashboard";
 
 type Building = Database["public"]["Tables"]["buildings"]["Row"];
 
@@ -15,7 +14,6 @@ export function useBuildings(period: string, apartment?: any) {
     queryKey: ["buildings", user?.id, period, apartment],
     queryFn: async () => {
       const userType = await userTypeQuery.data;
-      const { start, end } = getDaysPeriod(period);
 
       let query = supabase
         .from("buildings")
@@ -27,9 +25,8 @@ export function useBuildings(period: string, apartment?: any) {
           )
         `
         )
-        .eq("user_id", userType)
-        .gte("created_at", start.toISOString())
-        .lt("created_at", end.toISOString())
+        .eq("user_id", userType?.relatedId)
+
         .order("name");
 
       if (apartment) {
@@ -70,7 +67,7 @@ export function useBuildingsList() {
           )
         `
         )
-        .eq("user_id", userType)
+        .eq("user_id", userType?.relatedId)
 
         .order("name");
 

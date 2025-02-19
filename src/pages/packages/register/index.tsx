@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PackageLabel } from "@/components/packages/package-label";
+import { packageSend } from "../core/_requests";
 
 export function PackageRegister() {
   const [showLabel, setShowLabel] = useState(false);
@@ -59,7 +60,7 @@ export function PackageRegister() {
 
   const { data: buildings } = useBuildingsList();
   const { data: apartments } = useApartments(form.watch("building_id"));
-  const { data: residents } = useResidents();
+  const { residents } = useResidents();
 
   // Filtrar residentes pelo apartamento selecionado
   const filteredResidents = residents?.filter(
@@ -74,6 +75,13 @@ export function PackageRegister() {
     try {
       const result = await createPackage.mutateAsync(data);
       setCreatedPackage(result);
+      const dataSendWebHook = {
+        delivery_company: data.delivery_company,
+        store_name: data.store_name,
+        resident_id: data.resident_id,
+        package_id: String(result.id),
+      };
+      await packageSend(dataSendWebHook);
       setShowLabel(true);
       form.reset();
       toast({

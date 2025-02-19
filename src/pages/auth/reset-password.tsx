@@ -1,11 +1,14 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Package, Loader2, AlertTriangle } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
-import { resetPasswordSchema, type ResetPasswordFormData } from '@/lib/validations/auth';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Package, Loader2, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import {
+  resetPasswordSchema,
+  type ResetPasswordFormData,
+} from "@/lib/validations/auth";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,11 +16,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { PasswordStrength } from '@/components/ui/password-strength';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PasswordStrength } from "@/components/ui/password-strength";
+import { useToast } from "@/hooks/use-toast";
 
 export function ResetPassword() {
   const navigate = useNavigate();
@@ -28,8 +31,8 @@ export function ResetPassword() {
   const form = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      password: '',
-      confirmPassword: '',
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -39,23 +42,25 @@ export function ResetPassword() {
       const result = await updatePassword(data.password);
 
       if (result.error) {
-        if (result.error.message.includes('weak')) {
+        if (result.error.message.includes("weak")) {
           toast({
-            variant: 'destructive',
-            title: 'Senha fraca',
-            description: 'A senha não atende aos requisitos mínimos de segurança.',
+            variant: "destructive",
+            title: "Senha fraca",
+            description:
+              "A senha não atende aos requisitos mínimos de segurança.",
           });
-        } else if (result.error.message.includes('expired')) {
+        } else if (result.error.message.includes("expired")) {
           toast({
-            variant: 'destructive',
-            title: 'Link expirado',
-            description: 'O link de redefinição de senha expirou. Solicite um novo.',
+            variant: "destructive",
+            title: "Link expirado",
+            description:
+              "O link de redefinição de senha expirou. Solicite um novo.",
           });
-          navigate('/auth/forgot-password');
+          navigate("/auth/forgot-password");
         } else {
           toast({
-            variant: 'destructive',
-            title: 'Erro ao redefinir senha',
+            variant: "destructive",
+            title: "Erro ao redefinir senha",
             description: result.error.message,
           });
         }
@@ -63,15 +68,15 @@ export function ResetPassword() {
       }
 
       toast({
-        title: 'Senha atualizada',
-        description: 'Sua senha foi atualizada com sucesso.',
+        title: "Senha atualizada",
+        description: "Sua senha foi atualizada com sucesso.",
       });
-      navigate('/auth/login');
+      navigate("/auth/login");
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro inesperado',
-        description: 'Não foi possível atualizar sua senha.',
+        variant: "destructive",
+        title: "Erro inesperado",
+        description: "Não foi possível atualizar sua senha.",
       });
     } finally {
       setIsLoading(false);
@@ -167,7 +172,7 @@ export function ResetPassword() {
                     Atualizando...
                   </>
                 ) : (
-                  'Atualizar Senha'
+                  "Atualizar Senha"
                 )}
               </Button>
             </form>
