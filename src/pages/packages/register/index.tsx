@@ -64,7 +64,7 @@ export function PackageRegister() {
 
   // Filtrar residentes pelo apartamento selecionado
   const filteredResidents = residents?.filter(
-    (resident) => resident.apartment.id === form.watch("apartment_id")
+    (resident: any) => resident.apartment.id === form.watch("apartment_id")
   );
 
   const handlePrint = useReactToPrint({
@@ -199,7 +199,7 @@ export function PackageRegister() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {filteredResidents?.map((resident) => (
+                        {filteredResidents?.map((resident: any) => (
                           <SelectItem key={resident.id} value={resident.id}>
                             {resident.name}
                           </SelectItem>

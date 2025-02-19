@@ -52,7 +52,7 @@ export function ResidentNotifications() {
   const [buildingFilter, setBuildingFilter] = useState<string>('all');
   const [showPauseDialog, setShowPauseDialog] = useState(false);
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
-  const { data: residents, isLoading } = useResidents();
+  const { residents, isLoading } = useResidents();
   const { toast } = useToast();
 
   const handleToggleNotifications = async (resident: Resident, enabled: boolean) => {
@@ -161,7 +161,7 @@ export function ResidentNotifications() {
                   const matchesBuilding = buildingFilter === 'all' || resident.apartment.building.id === buildingFilter;
 
                   return matchesSearch && matchesBuilding;
-                }).map((resident) => (
+                }).map((resident: any) => (
                   <TableRow key={resident.id}>
                     <TableCell className="font-medium">
                       {resident.name}
