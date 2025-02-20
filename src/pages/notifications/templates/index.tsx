@@ -1,27 +1,6 @@
-import { useState } from 'react';
-import { FileText, Plus, Loader2 } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { useNotificationTemplates } from '@/hooks/use-notification-templates';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 import type { NotificationTemplateType } from '@/types/supabase';
 
 const templateTypes: Record<NotificationTemplateType, { label: string }> = {
@@ -34,60 +13,7 @@ const templateTypes: Record<NotificationTemplateType, { label: string }> = {
 };
 
 export function NotificationTemplates() {
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<any>(null);
-  const { templates, isLoading, createTemplate, updateTemplate, toggleTemplate } = useNotificationTemplates();
-  const { toast } = useToast();
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      type: formData.get('type') as NotificationTemplateType,
-      title: formData.get('title') as string,
-      content: formData.get('content') as string,
-    };
-
-    try {
-      if (editingTemplate) {
-        await updateTemplate.mutateAsync({ id: editingTemplate.id, ...data });
-        toast({
-          title: 'Template atualizado',
-          description: 'O template foi atualizado com sucesso.',
-        });
-      } else {
-        await createTemplate.mutateAsync(data);
-        toast({
-          title: 'Template criado',
-          description: 'O template foi criado com sucesso.',
-        });
-      }
-      setShowDialog(false);
-      setEditingTemplate(null);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao salvar template',
-        description: 'Não foi possível salvar o template. Tente novamente.',
-      });
-    }
-  };
-
-  const handleToggle = async (id: string, active: boolean) => {
-    try {
-      await toggleTemplate.mutateAsync({ id, active });
-      toast({
-        title: active ? 'Template ativado' : 'Template desativado',
-        description: `O template foi ${active ? 'ativado' : 'desativado'} com sucesso.`,
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao alterar status',
-        description: 'Não foi possível alterar o status do template.',
-      });
-    }
-  };
+  const { templates, isLoading } = useNotificationTemplates();
 
   return (
     <div className="space-y-6">
@@ -98,14 +24,6 @@ export function NotificationTemplates() {
             Templates de Mensagem
           </h1>
         </div>
-
-        <Button onClick={() => {
-          setEditingTemplate(null);
-          setShowDialog(true);
-        }}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Template
-        </Button>
       </div>
 
       {isLoading ? (
@@ -119,10 +37,6 @@ export function NotificationTemplates() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{template.title}</CardTitle>
-                  <Switch
-                    checked={template.active}
-                    onCheckedChange={(checked) => handleToggle(template.id, checked)}
-                  />
                 </div>
               </CardHeader>
               <CardContent>
@@ -140,97 +54,12 @@ export function NotificationTemplates() {
                       {template.content}
                     </p>
                   </div>
-
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditingTemplate(template);
-                      setShowDialog(true);
-                    }}
-                  >
-                    Editar Template
-                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
-
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingTemplate ? 'Editar Template' : 'Novo Template'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingTemplate
-                ? 'Edite as informações do template de notificação.'
-                : 'Crie um novo template de notificação.'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo</label>
-              <Select
-                name="type"
-                defaultValue={editingTemplate?.type}
-                disabled={!!editingTemplate}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(templateTypes).map(([value, { label }]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Título</label>
-              <Input
-                name="title"
-                defaultValue={editingTemplate?.title}
-                placeholder="Título do template"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Conteúdo</label>
-              <Textarea
-                name="content"
-                defaultValue={editingTemplate?.content}
-                placeholder="Conteúdo da mensagem"
-                className="h-32"
-              />
-              <p className="text-xs text-muted-foreground">
-                Variáveis disponíveis: ${'{resident.name}'}, ${'{resident.phone}'}, ${'{package.delivery_company}'}, ${'{package.store_name}'}
-              </p>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowDialog(false);
-                  setEditingTemplate(null);
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit">
-                {editingTemplate ? 'Atualizar' : 'Criar'} Template
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
