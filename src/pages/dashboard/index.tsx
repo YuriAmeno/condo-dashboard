@@ -51,7 +51,7 @@ export function Dashboard() {
   const [period, setPeriod] = useState("today");
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
-
+  const [timingMetric, setTiming] = useState<any>();
   const { data: metrics, refetch: refetchMetrics } = useDashboardMetrics(
     period,
     selectedBuilding
@@ -92,6 +92,26 @@ export function Dashboard() {
 
   const COLORS = ["#FF8042", "#00C49F"];
 
+  const textMetric = () => {
+    if (period == "today") return "Média de hoje";
+    if (period == "week") return "Média dos últimos 7 dias";
+    return "Média dos últimos 30 dias";
+  };
+
+  useEffect(() => {
+    if (metrics?.averagePickupTime) {
+      const hours = Math.floor(metrics.averagePickupTime / (1000 * 60 * 60));
+      const minutes = Math.floor(
+        (metrics.averagePickupTime % (1000 * 60 * 60)) / (1000 * 60)
+      );
+
+      setTiming({ hour: hours, minute: minutes });
+    } else {
+      setTiming(null);
+    }
+  }, [metrics]);
+
+  console.log("metric test", metrics);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -202,15 +222,11 @@ export function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {metrics?.averagePickupTime
-                    ? `${Math.round(
-                        metrics.averagePickupTime / (1000 * 60 * 60)
-                      )}h`
-                    : "N/A"}
+                  {timingMetric
+                    ? `${timingMetric.hour}h ${timingMetric.minute}m`
+                    : "0h 0m"}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Média dos últimos 30 dias
-                </p>
+                <p className="text-xs text-muted-foreground">{textMetric()}</p>
               </CardContent>
             </Card>
           </div>
