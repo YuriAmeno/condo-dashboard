@@ -38,7 +38,6 @@ export function useCreatePackage() {
             throw new Error("Erro ao buscar informações do porteiro");
           }
 
-          doormanId = doormen.id;
           doormanName = doormen.name;
         }
 
