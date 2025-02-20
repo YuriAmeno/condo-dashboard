@@ -23,7 +23,6 @@ export function useCreatePackage() {
 
         const userLogged = userType.data;
 
-        let doormanId: string | null = null;
         let doormanName: string = "";
 
         // Se for porteiro, buscar informações do porteiro atual
