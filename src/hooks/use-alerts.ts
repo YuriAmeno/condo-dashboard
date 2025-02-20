@@ -76,7 +76,6 @@ export function useAlerts(period: string, apartment?: any) {
       if (pendingError) throw pendingError;
 
       if (!pendingPackages || pendingPackages.length === 0) {
-        console.log("No pending packages found.");
         return [];
       }
 

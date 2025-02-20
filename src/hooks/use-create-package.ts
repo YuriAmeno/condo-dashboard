@@ -58,10 +58,6 @@ export function useCreatePackage() {
           doormanName = `${manager.name} (Síndico)`;
         }
 
-        console.log(doormanId);
-
-        console.log(userLogged);
-
         // Criar a encomenda
         const { data: package_, error } = await supabase
           .from("packages")

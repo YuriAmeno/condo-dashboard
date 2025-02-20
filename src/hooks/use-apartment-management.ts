@@ -63,7 +63,6 @@ export function useApartmentManagement(buildingId: string | null) {
 
         const doormenIds = doormen.map((d) => d.user_id);
         doormenIds.push(userType.relatedId);
-        console.log(doormenIds);
 
         query = query.in("user_id", doormenIds);
       } else {

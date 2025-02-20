@@ -111,7 +111,6 @@ export function Dashboard() {
     }
   }, [metrics]);
 
-  console.log("metric test", metrics);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
