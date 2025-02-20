@@ -22,7 +22,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Loader2, X, User, Package } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { User as UserLogin } from "@supabase/supabase-js";

@@ -6,7 +6,7 @@ import {
   useCallback,
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { adminAuthClient, supabase } from "./supabase";
+import { supabase } from "./supabase";
 import type { User, AuthError, Session } from "@supabase/supabase-js";
 
 type UserRole = "manager" | "doorman";

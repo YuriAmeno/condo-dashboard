@@ -7,7 +7,6 @@ import {
   FileDown,
   Building2,
   Package,
-  BellRing,
   Loader2,
   Edit,
   X,
@@ -54,7 +53,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { ImportDialog } from "./import-dialog";
 import { ResidentForm } from "./resident-form";
-import { NotificationSettings } from "./notification-settings";
 import { ResidentDetails } from "./resident-details";
 import { applyPhoneMask, formatPhoneForDB } from "@/lib/utils";
 import type { Database } from "@/types/supabase";

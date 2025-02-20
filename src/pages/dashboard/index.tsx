@@ -50,7 +50,6 @@ export function Dashboard() {
   const navigate = useNavigate();
   const [period, setPeriod] = useState("today");
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
 
   const { data: metrics, refetch: refetchMetrics } = useDashboardMetrics(
