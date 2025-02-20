@@ -1,8 +1,6 @@
 import { FileText, Loader2 } from 'lucide-react';
 import { useNotificationTemplates } from '@/hooks/use-notification-templates';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
 import type { NotificationTemplateType } from '@/types/supabase';
 
 const templateTypes: Record<NotificationTemplateType, { label: string }> = {
@@ -15,24 +13,7 @@ const templateTypes: Record<NotificationTemplateType, { label: string }> = {
 };
 
 export function NotificationTemplates() {
-  const { templates, isLoading, toggleTemplate } = useNotificationTemplates();
-  const { toast } = useToast();
-
-  const handleToggle = async (id: string, active: boolean) => {
-    try {
-      await toggleTemplate.mutateAsync({ id, active });
-      toast({
-        title: active ? 'Template ativado' : 'Template desativado',
-        description: `O template foi ${active ? 'ativado' : 'desativado'} com sucesso.`,
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao alterar status',
-        description: 'Não foi possível alterar o status do template.',
-      });
-    }
-  };
+  const { templates, isLoading } = useNotificationTemplates();
 
   return (
     <div className="space-y-6">
@@ -56,10 +37,6 @@ export function NotificationTemplates() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{template.title}</CardTitle>
-                  <Switch
-                    checked={template.active}
-                    onCheckedChange={(checked) => handleToggle(template.id, checked)}
-                  />
                 </div>
               </CardHeader>
               <CardContent>
