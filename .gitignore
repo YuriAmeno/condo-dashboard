@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependências e builds
 node_modules
 dist
 dist-ssr
@@ -22,3 +23,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Ignorar arquivos do Docker
+Dockerfile
+docker-compose.yml
+.docker/
+docker/
+docker-sync/
+docker-compose.override.yml
+
+# Ignorar volumes e diretórios temporários do Docker
+**/logs/
+**/tmp/
+*.pid
+*.sock
+
+# Ignorar imagens e containers que possam ser salvos localmente
+.env
+.env.local
+.env.*.local
