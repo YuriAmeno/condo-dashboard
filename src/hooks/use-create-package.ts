@@ -23,7 +23,6 @@ export function useCreatePackage() {
 
         const userLogged = userType.data;
 
-        let doormanId: string | null = null;
         let doormanName: string = "";
 
         // Se for porteiro, buscar informações do porteiro atual
@@ -39,7 +38,6 @@ export function useCreatePackage() {
             throw new Error("Erro ao buscar informações do porteiro");
           }
 
-          doormanId = doormen.id;
           doormanName = doormen.name;
         }
 
@@ -57,10 +55,6 @@ export function useCreatePackage() {
 
           doormanName = `${manager.name} (Síndico)`;
         }
-
-        console.log(doormanId);
-
-        console.log(userLogged);
 
         // Criar a encomenda
         const { data: package_, error } = await supabase
