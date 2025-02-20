@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Package, Loader2 } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
-import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Package, Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,9 +13,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 export function Login() {
   const navigate = useNavigate();
@@ -27,8 +27,8 @@ export function Login() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 
@@ -39,22 +39,22 @@ export function Login() {
 
       if (result.error) {
         // Tratamento específico para diferentes tipos de erro
-        if (result.error.message.includes('Invalid login credentials')) {
+        if (result.error.message.includes("Invalid login credentials")) {
           toast({
-            variant: 'destructive',
-            title: 'Credenciais inválidas',
-            description: 'Email ou senha incorretos.',
+            variant: "destructive",
+            title: "Credenciais inválidas",
+            description: "Email ou senha incorretos.",
           });
-        } else if (result.error.message.includes('Email not confirmed')) {
+        } else if (result.error.message.includes("Email not confirmed")) {
           toast({
-            variant: 'destructive',
-            title: 'Email não confirmado',
-            description: 'Por favor, confirme seu email antes de fazer login.',
+            variant: "destructive",
+            title: "Email não confirmado",
+            description: "Por favor, confirme seu email antes de fazer login.",
           });
         } else {
           toast({
-            variant: 'destructive',
-            title: 'Erro ao fazer login',
+            variant: "destructive",
+            title: "Erro ao fazer login",
             description: result.error.message,
           });
         }
@@ -62,13 +62,13 @@ export function Login() {
       }
 
       // Redirecionar para a página anterior ou dashboard
-      const from = (location.state as any)?.from || '/';
+      const from = (location.state as any)?.from || "/";
       navigate(from, { replace: true });
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro inesperado',
-        description: 'Ocorreu um erro ao tentar fazer login.',
+        variant: "destructive",
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao tentar fazer login.",
       });
     } finally {
       setIsLoading(false);
@@ -149,7 +149,7 @@ export function Login() {
                     Entrando...
                   </>
                 ) : (
-                  'Entrar'
+                  "Entrar"
                 )}
               </Button>
             </form>
@@ -159,7 +159,7 @@ export function Login() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => navigate('/auth/register')}
+              onClick={() => navigate("/auth/register")}
               disabled={isLoading}
             >
               Cadastrar Novo Condomínio
@@ -170,7 +170,7 @@ export function Login() {
             <Button
               variant="link"
               className="underline underline-offset-4 hover:text-primary"
-              onClick={() => navigate('/auth/forgot-password')}
+              onClick={() => navigate("/auth/forgot-password")}
               disabled={isLoading}
             >
               Esqueceu sua senha?

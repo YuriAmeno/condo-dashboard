@@ -72,7 +72,6 @@ export function useResidents() {
         throw error;
       }
 
-      console.log("Residents fetched:", data);
       return data as Resident[];
     },
     enabled: !!user && !!userTypeQuery.data,

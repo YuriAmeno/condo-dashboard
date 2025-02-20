@@ -253,7 +253,7 @@ export function Residents() {
         </div>
 
         {isManager && (
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 justify-center sm:justify-end">
             <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -337,7 +337,7 @@ export function Residents() {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <Table className="min-w-[600px] sm:min-w-full">
+          <Table className="min-w-full">
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>

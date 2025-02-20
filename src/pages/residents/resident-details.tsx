@@ -35,8 +35,6 @@ interface ResidentDetailsProps {
 }
 
 export function ResidentDetails({ resident }: ResidentDetailsProps) {
-  console.log(resident);
-
   const residentPackageStts: { pending: 0; delivered: 0 } =
     resident.packages?.reduce(
       (acc: any, val: any) => {

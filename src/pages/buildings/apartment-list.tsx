@@ -90,7 +90,7 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
   };
 
   return (
-    <div className="space-y-4 max-w-[650px]">
+    <div className="space-y-4 max-w-[400px]">
       {/* Cabeçalho Responsivo */}
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <Dialog>
@@ -114,7 +114,7 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
 
       {/* Listagem Responsiva */}
       {isLoading ? (
-        <div className="flex items-center justify-center h-[400px]">
+        <div className="flex items-center justify-center ">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
