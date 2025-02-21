@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Package, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Package, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { registerSchema, type RegisterFormData } from "@/lib/validations/auth";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,10 +13,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { applyPhoneMask, formatPhoneForDB } from '@/lib/utils';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { applyPhoneMaskRegister, formatPhoneForDB } from "@/lib/utils";
 
 export function Register() {
   const navigate = useNavigate();
@@ -26,12 +26,12 @@ export function Register() {
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      building_name: '',
-      password: '',
-      confirmPassword: '',
+      name: "",
+      email: "",
+      phone: "",
+      building_name: "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -45,7 +45,7 @@ export function Register() {
         password: data.password,
         options: {
           data: {
-            role: 'manager',
+            role: "manager",
             is_active: true,
           },
           emailRedirectTo: `${window.location.origin}/auth/login`,
@@ -53,16 +53,16 @@ export function Register() {
       });
 
       if (authError) {
-        if (authError.message.includes('already registered')) {
+        if (authError.message.includes("already registered")) {
           toast({
-            variant: 'destructive',
-            title: 'Email já cadastrado',
-            description: 'Este email já está sendo usado por outra conta.',
+            variant: "destructive",
+            title: "Email já cadastrado",
+            description: "Este email já está sendo usado por outra conta.",
           });
         } else {
           toast({
-            variant: 'destructive',
-            title: 'Erro no cadastro',
+            variant: "destructive",
+            title: "Erro no cadastro",
             description: authError.message,
           });
         }
@@ -71,63 +71,61 @@ export function Register() {
 
       if (!authData.user) {
         toast({
-          variant: 'destructive',
-          title: 'Erro no cadastro',
-          description: 'Não foi possível criar o usuário.',
+          variant: "destructive",
+          title: "Erro no cadastro",
+          description: "Não foi possível criar o usuário.",
         });
         return;
       }
 
       // 2. Criar registro do manager
-      const { error: managerError } = await supabase
-        .from('managers')
-        .insert({
-          user_id: authData.user.id,
-          name: data.name,
-          email: data.email,
-          phone: formatPhoneForDB(data.phone),
-          building_name: data.building_name,
-        });
+      const { error: managerError } = await supabase.from("managers").insert({
+        user_id: authData.user.id,
+        name: data.name,
+        email: data.email,
+        phone: formatPhoneForDB(data.phone),
+        building_name: data.building_name,
+      });
 
       if (managerError) {
         // Limpar usuário criado em caso de erro
         await supabase.auth.admin.deleteUser(authData.user.id);
 
         toast({
-          variant: 'destructive',
-          title: 'Erro no cadastro',
-          description: 'Não foi possível completar o cadastro. Tente novamente.',
+          variant: "destructive",
+          title: "Erro no cadastro",
+          description:
+            "Não foi possível completar o cadastro. Tente novamente.",
         });
         return;
       }
 
       // 3. Criar building inicial
-      const { error: buildingError } = await supabase
-        .from('buildings')
-        .insert({
-          name: data.building_name,
-        });
+      const { error: buildingError } = await supabase.from("buildings").insert({
+        name: data.building_name,
+      });
 
       if (buildingError) {
         toast({
-          variant: 'destructive',
-          title: 'Erro ao criar prédio',
-          description: 'O cadastro foi realizado, mas não foi possível criar o prédio inicial.',
+          variant: "destructive",
+          title: "Erro ao criar prédio",
+          description:
+            "O cadastro foi realizado, mas não foi possível criar o prédio inicial.",
         });
       }
 
       toast({
-        title: 'Cadastro realizado com sucesso!',
-        description: 'Você já pode fazer login no sistema.',
+        title: "Cadastro realizado com sucesso!",
+        description: "Você já pode fazer login no sistema.",
       });
 
-      navigate('/auth/login');
+      navigate("/auth/login");
     } catch (error) {
-      console.error('Error creating manager:', error);
+      console.error("Error creating manager:", error);
       toast({
-        variant: 'destructive',
-        title: 'Erro inesperado',
-        description: 'Não foi possível completar o cadastro. Tente novamente.',
+        variant: "destructive",
+        title: "Erro inesperado",
+        description: "Não foi possível completar o cadastro. Tente novamente.",
       });
     } finally {
       setIsCreating(false);
@@ -170,9 +168,9 @@ export function Register() {
                   <FormItem>
                     <FormLabel>Nome Completo</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Seu nome" 
-                        {...field} 
+                      <Input
+                        placeholder="Seu nome"
+                        {...field}
                         disabled={isCreating}
                       />
                     </FormControl>
@@ -211,7 +209,7 @@ export function Register() {
                         placeholder="(00) 00000-0000"
                         {...field}
                         onChange={(e) => {
-                          const masked = applyPhoneMask(e.target.value);
+                          const masked = applyPhoneMaskRegister(e.target.value);
                           onChange(masked);
                         }}
                         disabled={isCreating}
@@ -285,18 +283,18 @@ export function Register() {
                     Cadastrando...
                   </>
                 ) : (
-                  'Cadastrar'
+                  "Cadastrar"
                 )}
               </Button>
             </form>
           </Form>
 
           <p className="px-8 text-center text-sm text-muted-foreground">
-            Já tem uma conta?{' '}
+            Já tem uma conta?{" "}
             <Button
               variant="link"
               className="underline underline-offset-4 hover:text-primary"
-              onClick={() => navigate('/auth/login')}
+              onClick={() => navigate("/auth/login")}
               disabled={isCreating}
             >
               Fazer login
