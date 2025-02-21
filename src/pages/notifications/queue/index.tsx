@@ -69,9 +69,9 @@ export function NotificationQueue() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{item.resident.name}</p>
+                        <p className="font-medium">{item.resident?.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {applyPhoneMask(item.resident.phone)}
+                          {applyPhoneMask(item.resident?.phone)}
                         </p>
                       </div>
                     </TableCell>

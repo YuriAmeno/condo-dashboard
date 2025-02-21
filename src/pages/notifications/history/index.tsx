@@ -1,9 +1,9 @@
-import { History, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useNotificationHistory } from '@/hooks/use-notification-history';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { History, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useNotificationHistory } from "@/hooks/use-notification-history";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 
 export function NotificationHistory() {
   const { data: notifications = [], isLoading } = useNotificationHistory();
@@ -33,7 +33,7 @@ export function NotificationHistory() {
             <div className="flex justify-center items-center h-40">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : notifications.length === 0 ? (
+          ) : notifications?.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
               <p>Nenhuma notificação encontrada</p>
             </div>
@@ -48,28 +48,38 @@ export function NotificationHistory() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {notifications.map((notification) => (
+                {notifications?.map((notification) => (
                   <TableRow key={notification.id}>
                     <TableCell>{notification.queue.template.title}</TableCell>
                     <TableCell>{notification.queue.template.type}</TableCell>
                     <TableCell>
-                      {format(new Date(notification.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                        locale: ptBR,
-                      })}
+                      {format(
+                        new Date(notification.created_at),
+                        "dd/MM/yyyy 'às' HH:mm",
+                        {
+                          locale: ptBR,
+                        }
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant={
-                          notification.status === 'delivered' ? 'default' :
-                          notification.status === 'failed' ? 'destructive' :
-                          'secondary'
+                          notification.status === "delivered"
+                            ? "default"
+                            : notification.status === "failed"
+                            ? "destructive"
+                            : "secondary"
                         }
                       >
-                        {notification.status === 'delivered' ? 'Entregue' :
-                         notification.status === 'failed' ? 'Falhou' :
-                         notification.status === 'sent' ? 'Enviado' :
-                         notification.status === 'pending' ? 'Pendente' :
-                         'Em Processamento'}
+                        {notification.status === "delivered"
+                          ? "Entregue"
+                          : notification.status === "failed"
+                          ? "Falhou"
+                          : notification.status === "sent"
+                          ? "Enviado"
+                          : notification.status === "pending"
+                          ? "Pendente"
+                          : "Em Processamento"}
                       </Badge>
                     </TableCell>
                   </TableRow>
