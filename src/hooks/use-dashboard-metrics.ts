@@ -32,7 +32,7 @@ export const useDashboardMetrics = (period: string, apartment?: any) => {
           `*,apartment:apartments!inner(
           id,
           user_id,
-          building:buildings(*)
+          building:buildings!inner(*)
         )`
         )
         .gte("created_at", start.toISOString())

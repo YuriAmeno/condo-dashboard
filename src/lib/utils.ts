@@ -36,7 +36,6 @@ export function isValidPhone(phone: string): boolean {
   return numbers.length === 11;
 }
 
-// Aplicar máscara enquanto digita
 export function applyPhoneMask(value: string): string {
   let numbers = value.replace(/\D/g, ""); // Remove tudo que não for número
 
@@ -47,8 +46,8 @@ export function applyPhoneMask(value: string): string {
   let formattedNumber = "";
 
   if (hasCountryCode) {
-    countryCode = `+${numbers.slice(0, 2)} `; // Adiciona o código do país com "+"
-    numbers = numbers.slice(2); // Remove o código do país da string
+    countryCode = `+${numbers.slice(0, 2)} `;
+    numbers = numbers.slice(2);
   }
 
   if (numbers.length <= 2) {
@@ -63,4 +62,21 @@ export function applyPhoneMask(value: string): string {
   }
 
   return countryCode + formattedNumber;
+}
+
+export function applyPhoneMaskRegister(value: string): string {
+  const numbers = value.replace(/\D/g, "");
+
+  if (numbers.length <= 2) {
+    return numbers;
+  }
+
+  if (numbers.length <= 7) {
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+  }
+
+  return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(
+    7,
+    11
+  )}`;
 }

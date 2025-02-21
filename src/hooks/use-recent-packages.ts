@@ -28,10 +28,11 @@ export function useRecentPackages(period: string, apartment?: any) {
         *,
         apartment:apartments!inner(
           id,
-          building:buildings(*)
+          building:buildings!inner(*)
         )
         `
         )
+        // .neq("apartment.building_id", null)
 
         .gte("created_at", start.toISOString())
         .lt("created_at", end.toISOString())
@@ -49,12 +50,10 @@ export function useRecentPackages(period: string, apartment?: any) {
           return null;
         }
 
-        if (doormen) {
-          const doormenIds = doormen.map((d) => d.user_id);
-          doormenIds.push(userType.relatedId);
+        const doormenIds = doormen.map((d) => d.user_id);
+        doormenIds.push(userType.relatedId);
 
-          query = query.in("apartment.building.user_id", doormenIds);
-        }
+        query = query.in("apartment.building.user_id", doormenIds);
       } else {
         query = query.in("apartment.building.user_id", [
           userType?.relatedId,

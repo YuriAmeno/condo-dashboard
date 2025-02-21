@@ -51,7 +51,7 @@ export function useNotificationQueue() {
             title,
             content
           ),
-          package:packages (*)
+          package:packages!inner(*, apartment:apartments!inner(*,building:buildings!inner(*)))
         `
         )
         .order("scheduled_for", { ascending: true });
@@ -70,9 +70,9 @@ export function useNotificationQueue() {
         const doormenIds = doormen.map((d) => d.user_id);
         doormenIds.push(userType.relatedId);
 
-        query = query.in("resident.user_id", doormenIds);
+        query = query.in("package.apartment.building.user_id", doormenIds);
       } else {
-        query = query.in("resident.user_id", [
+        query = query.in("package.apartment.building.user_id", [
           userType?.relatedId,
           userType?.doormanUserId,
         ]);
