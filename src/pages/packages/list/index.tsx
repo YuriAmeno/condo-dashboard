@@ -38,7 +38,6 @@ export function PackageList() {
       pkg.apartment.building.name
         .toLowerCase()
         .includes(search.toLowerCase()) ||
-      pkg.apartment.number.toLowerCase().includes(search.toLowerCase()) ||
       pkg.delivery_company.toLowerCase().includes(search.toLowerCase()) ||
       pkg.store_name.toLowerCase().includes(search.toLowerCase());
 
@@ -138,7 +137,7 @@ export function PackageList() {
                   <div className="flex items-center space-x-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {pkg.apartment.building.name} - {pkg.apartment.number}
+                      {pkg.apartment.building.name}
                     </span>
                   </div>
                 </TableCell>
