@@ -31,20 +31,21 @@ export function useResidentNotificationHistory(residentId: string | null) {
         .select(
           `
           *,
-          queue:notification_queue (
-            resident:residents (
+          queue:notification_queue!inner(
+            resident:residents!inner(
               name,
               phone,
               user_id
             ),
-            template:notification_templates (
+            template:notification_templates!inner(
               type,
               title
             ),
-            package:packages (*)
+            package:packages!inner(*)
           )
         `
         )
+
         .eq("queue.resident_id", residentId)
         .order("created_at", { ascending: false });
 
@@ -62,9 +63,9 @@ export function useResidentNotificationHistory(residentId: string | null) {
         const doormenIds = doormen.map((d) => d.user_id);
         doormenIds.push(userType.relatedId);
 
-        query = query.in("resident.user_id", doormenIds);
+        query = query.in("queue.resident.user_id", doormenIds);
       } else {
-        query = query.in("resident.user_id", [
+        query = query.in("queue.resident.user_id", [
           userType?.relatedId,
           userType?.doormanUserId,
         ]);
@@ -75,6 +76,6 @@ export function useResidentNotificationHistory(residentId: string | null) {
       if (error) throw error;
       return data as NotificationLog[];
     },
-    enabled: !!residentId,
+    enabled: !!residentId && !!userTypeQuery.data,
   });
 }

@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import type { Database } from "@/types/supabase";
 import type { DoormanStatus, DoormanShift } from "@/types/supabase";
+import { useUserType } from "./queryUser";
 
 type Doorman = Database["public"]["Tables"]["doormen"]["Row"];
 
@@ -44,16 +45,21 @@ export function useDoormen(filters?: {
 }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const usertype = useUserType();
 
   const query = useQuery({
     queryKey: ["doormen", filters, user?.id],
     queryFn: async () => {
+      const userData = usertype?.data;
       // Buscar porteiros vinculados ao manager atual
-      const { data: doormen, error: doormenError } = await supabase.from(
-        "doormen"
-      ).select(`
+      const { data: doormen, error: doormenError } = await supabase
+        .from("doormen")
+        .select(
+          `
           *
-        `);
+        `
+        )
+        .eq("manager_id", userData?.managerId);
 
       if (doormenError) throw doormenError;
 

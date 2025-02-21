@@ -42,7 +42,7 @@ export function useAlerts(period: string, apartment?: any) {
         .select(
           `
           *,
-          apartment:apartments (*,building:buildings (*)),
+          apartment:apartments!inner(*,building:buildings!inner(*)),
            resident:residents(*)
         `
         )

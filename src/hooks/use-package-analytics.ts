@@ -53,12 +53,12 @@ export function usePackageAnalytics(period: string, apartment?: any) {
           `
           *,
           apartment:apartments!inner(
-            id,
-            building:buildings(*)
-          )
+          id,
+          building:buildings!inner(*)
+        )
         `
         )
-
+        // .neq("apartment.building_id", "")
         .gte("created_at", start.toISOString())
         .lt("created_at", end.toISOString());
 

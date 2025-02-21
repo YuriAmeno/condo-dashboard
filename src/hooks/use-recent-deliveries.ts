@@ -20,9 +20,9 @@ export function useRecentDeliveries() {
         .select(
           `
           *,
-          apartment:apartments (
+          apartment:apartments!inner(
             *,
-            building:buildings (*)
+            building:buildings!inner(*)
           )
         `
         )
