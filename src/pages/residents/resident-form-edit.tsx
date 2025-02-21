@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { applyPhoneMask } from "@/lib/utils";
+import { applyPhoneMaskRegister } from "@/lib/utils";
 import type { Database } from "@/types/supabase";
 
 const residentSchema = z.object({
@@ -56,7 +56,7 @@ export function ResidentFormEdit({
       name: resident.name,
       apartment_id: resident.apartment_id,
 
-      phone: applyPhoneMask(String(resident.phone)),
+      phone: applyPhoneMaskRegister(String(resident.phone)),
       email: resident.email,
       receive_notifications: resident.receive_notifications,
     },
@@ -156,7 +156,7 @@ export function ResidentFormEdit({
                   placeholder="(00) 00000-0000"
                   {...field}
                   onChange={(e) => {
-                    const masked = applyPhoneMask(e.target.value);
+                    const masked = applyPhoneMaskRegister(e.target.value);
                     onChange(masked);
                   }}
                 />
