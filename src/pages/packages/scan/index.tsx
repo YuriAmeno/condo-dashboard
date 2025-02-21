@@ -66,13 +66,14 @@ export function PackageScan() {
 
   const handleScanError = useCallback(
     (error: string) => {
-      if (!error.includes("NotFound")) {
-        toast({
-          variant: "destructive",
-          title: "Erro no Scanner",
-          description: error,
-        });
+      if (error.includes("NotFound") || error.includes("No barcode")) {
+        return;
       }
+      toast({
+        variant: "destructive",
+        title: "Erro no Scanner",
+        description: error,
+      });
     },
     [toast]
   );

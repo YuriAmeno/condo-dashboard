@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 
 interface UseQRCodeScannerProps {
   onResult: (result: string) => void;
@@ -10,38 +10,43 @@ export function useQRCodeScanner({ onResult, onError }: UseQRCodeScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
-  const startScanner = useCallback(async (elementId: string) => {
-    try {
-      if (!scannerRef.current) {
-        scannerRef.current = new Html5Qrcode(elementId);
-      }
-
-      const scanner = scannerRef.current;
-      setIsScanning(true);
-
-      await scanner.start(
-        { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1,
-        },
-        (decodedText) => {
-          onResult(decodedText);
-        },
-        (errorMessage) => {
-          if (onError && !errorMessage.includes('NotFound')) {
-            onError(errorMessage);
-          }
+  const startScanner = useCallback(
+    async (elementId: string) => {
+      try {
+        if (!scannerRef.current) {
+          scannerRef.current = new Html5Qrcode(elementId);
         }
-      );
-    } catch (error) {
-      setIsScanning(false);
-      if (onError) {
-        onError(error instanceof Error ? error.message : 'Failed to start scanner');
+
+        const scanner = scannerRef.current;
+        setIsScanning(true);
+
+        await scanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1,
+          },
+          (decodedText) => {
+            onResult(decodedText);
+          },
+          (errorMessage) => {
+            if (onError && !errorMessage.includes("NotFound")) {
+              onError(errorMessage);
+            }
+          }
+        );
+      } catch (error) {
+        setIsScanning(false);
+        if (onError) {
+          onError(
+            error instanceof Error ? error.message : "Failed to start scanner"
+          );
+        }
       }
-    }
-  }, [onResult, onError]);
+    },
+    [onResult, onError]
+  );
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current && isScanning) {
@@ -50,30 +55,38 @@ export function useQRCodeScanner({ onResult, onError }: UseQRCodeScannerProps) {
         setIsScanning(false);
       } catch (error) {
         if (onError) {
-          onError('Failed to stop scanner');
+          onError("Failed to stop scanner");
         }
       }
     }
   }, [isScanning, onError]);
 
-  const toggleScanner = useCallback(async (elementId: string) => {
-    if (isScanning) {
-      await stopScanner();
-    } else {
-      await startScanner(elementId);
-    }
-  }, [isScanning, startScanner, stopScanner]);
+  const toggleScanner = useCallback(
+    async (elementId: string) => {
+      if (isScanning) {
+        await stopScanner();
+      } else {
+        await startScanner(elementId);
+      }
+    },
+    [isScanning, startScanner, stopScanner]
+  );
 
   // Cleanup scanner on unmount
   useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {
-          // Ignore cleanup errors
-        });
+    const handleVisibilityChange = () => {
+      if (document.hidden && scannerRef.current) {
+        scannerRef.current.stop().catch(() => {});
         scannerRef.current.clear();
         scannerRef.current = null;
+        setIsScanning(false);
       }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
