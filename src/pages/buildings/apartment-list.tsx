@@ -90,7 +90,7 @@ export function ApartmentList({ buildingId }: ApartmentListProps) {
   };
 
   return (
-    <div className="space-y-4 max-w-[400px]">
+    <div className="space-y-4 custom-w-300 lg:w-[600px] md:w-[650px] sm:w-[550px]">
       {/* Cabeçalho Responsivo */}
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <Dialog>

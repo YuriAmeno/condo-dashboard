@@ -49,7 +49,7 @@
   }
 }
 
-@media (max-width: 635px) {
+@media (max-width: 500px) {
   .custom-w-300 {
     width: 400px !important;
   }
