@@ -66,7 +66,11 @@ export function PackageScan() {
 
   const handleScanError = useCallback(
     (error: string) => {
-      if (error.includes("NotFound") || error.includes("No barcode")) {
+      if (
+        error.includes("NotFound") ||
+        error.includes("No barcode") ||
+        error.includes("MultiFormat")
+      ) {
         return;
       }
       toast({
