@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { applyPhoneMask } from "@/lib/utils";
+import { applyPhoneMaskRegister } from "@/lib/utils";
 
 const residentSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -149,7 +149,7 @@ export function ResidentForm({ onSubmit }: ResidentFormProps) {
                   placeholder="(00) 00000-0000"
                   {...field}
                   onChange={(e) => {
-                    const masked = applyPhoneMask(e.target.value);
+                    const masked = applyPhoneMaskRegister(e.target.value);
                     onChange(masked);
                   }}
                 />
