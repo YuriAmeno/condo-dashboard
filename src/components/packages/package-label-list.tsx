@@ -5,16 +5,17 @@ import { cn } from '@/lib/utils'
 import type { Database } from '@/types/supabase'
 
 type PackageData = Database['public']['Tables']['packages']['Row'] & {
-  apartment: Database['public']['Tables']['apartments']['Row']
-  building: Database['public']['Tables']['buildings']['Row']
+  apartment: Database['public']['Tables']['apartments']['Row'] & {
+    building: Database['public']['Tables']['buildings']['Row']
+  }
 }
 
-interface PackageLabelProps {
+interface PackageList {
   data: PackageData
   className?: string
 }
 
-export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
+export const PackageLabelList = forwardRef<HTMLDivElement, PackageList>(
   ({ data, className = '' }, ref) => {
     return (
       <div
@@ -27,7 +28,7 @@ export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
       >
         <div className="flex items-center justify-center mb-4">
           <Package className="h-8 w-8 mr-2 text-primary" />
-          <span className="text-xl font-bold text-primary">Porta Dex</span>
+          <span className="text-xl font-bold text-primary">{data.apartment.building.name}</span>
         </div>
 
         <div className="flex justify-center mb-4">
@@ -40,10 +41,10 @@ export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
           />
         </div>
 
-        <div className="space-y-2 text-sm">
+        <div className="space-y-3 text-sm">
           <div className="flex justify-between items-center">
             <span className="font-semibold text-muted-foreground">Torre:</span>
-            <span className="text-foreground">{data.building.name}</span>
+            <span className="text-foreground">{data.apartment.building.name}</span>
           </div>
 
           <div className="flex justify-between items-center">
@@ -57,18 +58,17 @@ export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-muted-foreground">ID:</span>
-            <span className="text-foreground">{data.id}</span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="font-semibold text-muted-foreground">Codigo QR:</span>
-            <span className="text-foreground">{data.qr_code}</span>
+            <span className="font-semibold text-muted-foreground">Entregue em:</span>
+            <span className="text-foreground">
+              {data.delivered_at == '' ? new Date(data.delivered_at).toLocaleString() : ''}
+            </span>
           </div>
 
           <div className="flex justify-between items-center">
             <span className="font-semibold text-muted-foreground">Porteiro:</span>
-            <span className="text-foreground">{data.doorman_name}</span>
+            <span className="text-foreground">
+              {data.doorman_name == '' ? 'Síndico' : data.doorman_name}
+            </span>
           </div>
         </div>
       </div>
@@ -76,4 +76,4 @@ export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
   },
 )
 
-PackageLabel.displayName = 'PackageLabel'
+PackageLabelList.displayName = 'PackageLabel'
