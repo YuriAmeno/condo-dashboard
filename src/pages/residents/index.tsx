@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react'
 import {
   Users,
   Plus,
@@ -10,14 +10,14 @@ import {
   Loader2,
   Edit,
   X,
-} from "lucide-react";
-import { useResidents } from "@/hooks/use-residents";
-import { useBuildingsList } from "@/hooks/use-buildings";
-import { useImportExport } from "@/hooks/use-import-export";
-import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from 'lucide-react'
+import { useResidents } from '@/hooks/use-residents'
+import { useBuildingsList } from '@/hooks/use-buildings'
+import { useImportExport } from '@/hooks/use-import-export'
+import { useAuth } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
@@ -25,14 +25,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -40,8 +40,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
 import {
   Sheet,
   SheetContent,
@@ -49,207 +49,199 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
-import { useToast } from "@/hooks/use-toast";
-import { ImportDialog } from "./import-dialog";
-import { ResidentForm } from "./resident-form";
-import { ResidentDetails } from "./resident-details";
-import { applyPhoneMask, formatPhoneForDB } from "@/lib/utils";
-import type { Database } from "@/types/supabase";
-import { ResidentFormEdit } from "./resident-form-edit";
+} from '@/components/ui/sheet'
+import { useToast } from '@/hooks/use-toast'
+import { ImportDialog } from './import-dialog'
+import { ResidentForm } from './resident-form'
+import { ResidentDetails } from './resident-details'
+import { applyPhoneMask, formatPhoneForDB } from '@/lib/utils'
+import type { Database } from '@/types/supabase'
+import { ResidentFormEdit } from './resident-form-edit'
 
-type Resident = Database["public"]["Tables"]["residents"]["Row"] & {
-  apartment: Database["public"]["Tables"]["apartments"]["Row"] & {
-    building: Database["public"]["Tables"]["buildings"]["Row"];
-  };
-  packages?: Array<Database["public"]["Tables"]["packages"]["Row"]>;
-};
+type Resident = Database['public']['Tables']['residents']['Row'] & {
+  apartment: Database['public']['Tables']['apartments']['Row'] & {
+    building: Database['public']['Tables']['buildings']['Row']
+  }
+  packages?: Array<Database['public']['Tables']['packages']['Row']>
+}
 
 export function Residents() {
-  const [search, setSearch] = useState("");
-  const [buildingFilter, setBuildingFilter] = useState<string | "all">("all");
-  const [isCreating, setIsCreating] = useState(false);
-  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [search, setSearch] = useState('')
+  const [buildingFilter, setBuildingFilter] = useState<string | 'all'>('all')
+  const [isCreating, setIsCreating] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
 
-  const { residents, isLoading, updateResidents, deleteResident } =
-    useResidents();
-  const { data: buildings } = useBuildingsList();
-  const { importData, exportData } = useImportExport();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const isManager = user?.role === "manager";
+  const { residents, isLoading, updateResidents, deleteResident } = useResidents()
+  const { data: buildings } = useBuildingsList()
+  const { importData, exportData } = useImportExport()
+  const { toast } = useToast()
+  const { user } = useAuth()
+  const isManager = user?.role === 'manager'
 
   const filteredResidents = residents?.filter((resident: Resident) => {
     const matchesSearch =
       resident.name.toLowerCase().includes(search.toLowerCase()) ||
       resident.apartment.number.toLowerCase().includes(search.toLowerCase()) ||
-      resident.apartment.building.name
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
+      resident.apartment.building.name.toLowerCase().includes(search.toLowerCase()) ||
       resident.phone.includes(search) ||
-      resident.email.toLowerCase().includes(search.toLowerCase());
+      resident.email.toLowerCase().includes(search.toLowerCase())
 
     const matchesBuilding =
-      buildingFilter === "all" ||
-      resident.apartment.building.id === buildingFilter;
+      buildingFilter === 'all' || resident.apartment.building.id === buildingFilter
 
-    return matchesSearch && matchesBuilding;
-  });
+    return matchesSearch && matchesBuilding
+  })
 
   const handleCreateResident = async (data: any) => {
     try {
-      setIsCreating(true);
+      setIsCreating(true)
 
       const { data: existingResident } = await supabase
-        .from("residents")
-        .select("id")
-        .eq("email", data.email)
-        .single();
+        .from('residents')
+        .select('id')
+        .eq('email', data.email)
+        .single()
 
       if (existingResident) {
         toast({
-          variant: "destructive",
-          title: "Erro ao cadastrar morador",
-          description: "Já existe um morador cadastrado com este email.",
-        });
-        return;
+          variant: 'destructive',
+          title: 'Erro ao cadastrar morador',
+          description: 'Já existe um morador cadastrado com este email.',
+        })
+        return
       }
 
-      const { error } = await supabase.from("residents").insert({
+      const { error } = await supabase.from('residents').insert({
         name: data.name,
         phone: formatPhoneForDB(data.phone),
         email: data.email,
         apartment_id: data.apartment_id,
         receive_notifications: data.receive_notifications,
-      });
+      })
 
       if (error) {
-        throw error;
+        throw error
       }
 
       toast({
-        title: "Morador cadastrado",
-        description: "O morador foi cadastrado com sucesso.",
-      });
+        title: 'Morador cadastrado',
+        description: 'O morador foi cadastrado com sucesso.',
+      })
 
-      setIsCreating(false);
+      setIsCreating(false)
     } catch (error) {
-      console.error("Error creating resident:", error);
+      console.error('Error creating resident:', error)
       toast({
-        variant: "destructive",
-        title: "Erro ao cadastrar morador",
-        description: "Não foi possível cadastrar o morador. Tente novamente.",
-      });
+        variant: 'destructive',
+        title: 'Erro ao cadastrar morador',
+        description: 'Não foi possível cadastrar o morador. Tente novamente.',
+      })
     } finally {
-      setIsCreating(false);
+      setIsCreating(false)
     }
-  };
+  }
 
   const handleEditResident = async (id: string, data: any) => {
     try {
-      const { building_id, ...filteredData } = data;
+      const { building_id, ...filteredData } = data
 
-      await updateResidents.mutateAsync({ id, ...filteredData });
+      await updateResidents.mutateAsync({ id, ...filteredData })
 
       toast({
-        title: "Morador atualizado",
-        description: "O morador foi editado com sucesso.",
-      });
-      window.location.reload();
+        title: 'Morador atualizado',
+        description: 'O morador foi editado com sucesso.',
+      })
+      window.location.reload()
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Erro ao editar morador",
-        description: "Não foi possível editar o morador. Tente novamente.",
-      });
+        variant: 'destructive',
+        title: 'Erro ao editar morador',
+        description: 'Não foi possível editar o morador. Tente novamente.',
+      })
     }
-  };
+  }
 
   const handleImport = async (file: File, mapping: Record<string, string>) => {
     try {
       await importData.mutateAsync({
         file,
         config: {
-          type: "residents",
+          type: 'residents',
           mapping,
         },
-      });
+      })
 
       toast({
-        title: "Importação concluída",
-        description: "Os moradores foram importados com sucesso.",
-      });
+        title: 'Importação concluída',
+        description: 'Os moradores foram importados com sucesso.',
+      })
 
-      setShowImportDialog(false);
+      setShowImportDialog(false)
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Erro na importação",
+        variant: 'destructive',
+        title: 'Erro na importação',
         description:
           error instanceof Error
             ? error.message
-            : "Não foi possível importar os moradores. Verifique o arquivo e tente novamente.",
-      });
+            : 'Não foi possível importar os moradores. Verifique o arquivo e tente novamente.',
+      })
     }
-  };
+  }
 
   const handleExport = async () => {
     try {
       const blob = await exportData.mutateAsync({
-        type: "residents",
-        fields: ["name", "phone", "email", "apartment_id"],
-      });
+        type: 'residents',
+        fields: ['name', 'phone', 'email', 'apartment_id'],
+      })
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `moradores-${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `moradores-${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
 
       toast({
-        title: "Exportação concluída",
-        description: "Os dados foram exportados com sucesso.",
-      });
+        title: 'Exportação concluída',
+        description: 'Os dados foram exportados com sucesso.',
+      })
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Erro na exportação",
-        description: "Não foi possível exportar os dados. Tente novamente.",
-      });
+        variant: 'destructive',
+        title: 'Erro na exportação',
+        description: 'Não foi possível exportar os dados. Tente novamente.',
+      })
     }
-  };
+  }
 
   const handleDeleteResident = async (id: string) => {
     try {
-      await deleteResident.mutateAsync({ id });
+      await deleteResident.mutateAsync({ id })
       toast({
-        title: "Morador Deletado",
-        description: "O morador foi deletada com sucesso.",
-      });
-      window.location.reload();
+        title: 'Morador Deletado',
+        description: 'O morador foi deletada com sucesso.',
+      })
+      window.location.reload()
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Erro ao deletar morador",
-        description: "Não foi possível deletar o morador. Tente novamente.",
-      });
+        variant: 'destructive',
+        title: 'Erro ao deletar morador',
+        description: 'Não foi possível deletar o morador. Tente novamente.',
+      })
     }
-  };
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       {/* Cabeçalho Responsivo */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center space-x-2">
           <Users className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Moradores
-          </h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Moradores</h1>
         </div>
 
         {isManager && (
@@ -287,9 +279,7 @@ export function Residents() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Novo Morador</DialogTitle>
-                  <DialogDescription>
-                    Cadastre um novo morador no sistema.
-                  </DialogDescription>
+                  <DialogDescription>Cadastre um novo morador no sistema.</DialogDescription>
                 </DialogHeader>
                 <ResidentForm onSubmit={handleCreateResident} />
               </DialogContent>
@@ -312,9 +302,7 @@ export function Residents() {
 
         <Select
           value={buildingFilter}
-          onValueChange={(value) =>
-            setBuildingFilter(value as typeof buildingFilter)
-          }
+          onValueChange={(value) => setBuildingFilter(value as typeof buildingFilter)}
         >
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Filtrar por torre" />
@@ -356,28 +344,19 @@ export function Residents() {
                     <div className="flex items-center space-x-2">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <span>
-                        {resident.apartment.building.name} -{" "}
-                        {resident.apartment.number}
+                        {resident.apartment.building.name} - {resident.apartment.number}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <p className="text-sm">
-                        {applyPhoneMask(resident.phone)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {resident.email}
-                      </p>
+                      <p className="text-sm">{applyPhoneMask(resident.phone)}</p>
+                      <p className="text-sm text-muted-foreground">{resident.email}</p>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        resident.receive_notifications ? "default" : "secondary"
-                      }
-                    >
-                      {resident.receive_notifications ? "Ativas" : "Pausadas"}
+                    <Badge variant={resident.receive_notifications ? 'default' : 'secondary'}>
+                      {resident.receive_notifications ? 'Ativas' : 'Pausadas'}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -394,15 +373,10 @@ export function Residents() {
                             <Users className="h-4 w-4" />
                           </Button>
                         </SheetTrigger>
-                        <SheetContent
-                          side="right"
-                          className="w-[90%] sm:w-[800px]"
-                        >
+                        <SheetContent side="right" className="w-[90%] sm:w-[800px]">
                           <SheetHeader>
                             <SheetTitle>Detalhes do Morador</SheetTitle>
-                            <SheetDescription>
-                              Informações completas do morador.
-                            </SheetDescription>
+                            <SheetDescription>Informações completas do morador.</SheetDescription>
                           </SheetHeader>
                           <ResidentDetails resident={resident} />
                         </SheetContent>
@@ -425,9 +399,7 @@ export function Residents() {
                               </DialogHeader>
                               <ResidentFormEdit
                                 resident={resident}
-                                onSubmit={(data) =>
-                                  handleEditResident(resident.id, data)
-                                }
+                                onSubmit={(data) => handleEditResident(resident.id, data)}
                               />
                             </DialogContent>
                           </Dialog>
@@ -448,9 +420,7 @@ export function Residents() {
                               <Button
                                 type="button"
                                 className="w-full"
-                                onClick={() =>
-                                  handleDeleteResident(resident.id)
-                                }
+                                onClick={() => handleDeleteResident(resident.id)}
                               >
                                 Deletar Morador
                               </Button>
@@ -467,5 +437,5 @@ export function Residents() {
         </div>
       )}
     </div>
-  );
+  )
 }
