@@ -1,7 +1,7 @@
-import { useAuth } from '@/lib/auth';
-import * as Icons from 'lucide-react';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth'
+import * as Icons from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,44 +9,58 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
+} from '@/components/ui/dropdown-menu'
+import { useToast } from '@/hooks/use-toast'
+import { useUserType } from '@/hooks/queryUser'
+import { useEffect, useState } from 'react'
+import { Dialog, DialogDescription, DialogTitle, DialogTrigger } from '@radix-ui/react-dialog'
+import { DialogContentBuilding, DialogHeader } from '../ui/dialog'
+import { Card, CardContent, CardHeader } from '../ui/card'
+import { PackagePending } from './logout/packagesPending'
+import { ScanPackages } from './logout/scanPackages'
+import { useLayout } from './core/useLayout'
 
 interface HeaderProps {
-  children?: React.ReactNode;
+  children?: React.ReactNode
 }
 
 export function Header({ children }: HeaderProps) {
-  const { user, signOut } = useAuth();
-  const { toast } = useToast();
+  const { user, signOut } = useAuth()
+  const { toast } = useToast()
+  const userLogged = useUserType()
+
+  const { packVerified, packs, openPackagePending, setOpenPackage } = useLayout()
 
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao sair',
-        description: 'Não foi possível fazer logout. Tente novamente.',
-      });
+    const userCurrent = userLogged.data
+    if (userCurrent?.type == 'manager') {
+      const { error } = await signOut()
+      if (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao sair',
+          description: 'Não foi possível fazer logout. Tente novamente.',
+        })
+      }
+    } else {
+      setOpenPackage(true)
     }
-  };
+  }
+
+  useEffect(() => {
+    console.log(packVerified)
+  }, [packVerified])
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center justify-between">
-        <div className="flex items-center gap-4">
-          {children}
-          <div className="flex items-center gap-2">
-            <Icons.Package className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl text-primary">
-              Porta Dex
-            </span>
-          </div>
+      <div className="flex items-center justify-between p-4 w-full">
+        <div className="flex items-center gap-2">
+          <Icons.Package className="h-6 w-6 text-primary" />
+          <span className="font-bold text-xl text-primary">Porta Dex</span>
         </div>
 
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -70,7 +84,38 @@ export function Header({ children }: HeaderProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        <Dialog open={openPackagePending} onOpenChange={setOpenPackage}>
+          <DialogContentBuilding>
+            <DialogHeader>
+              <DialogTitle>Confirmação de Entregas</DialogTitle>
+              <DialogDescription>Confirme as entregas antes de trocar o turno</DialogDescription>
+            </DialogHeader>
+            <div className="mt-6">
+              <Card>
+                <CardHeader>Pacotes Pendentes</CardHeader>
+                <CardContent>
+                  <PackagePending
+                    userLogged={userLogged.data}
+                    // handlePack={(dta) => getPackages(dta)}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card className="mt-5">
+                <CardHeader>Escanear Pacotes</CardHeader>
+                <CardContent>
+                  <ScanPackages
+                  // packagesPending={packs}
+                  // handleVerifyPack={(dta: any) => handleVerifiedPack(dta)}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </DialogContentBuilding>
+        </Dialog>
       </div>
+
+      {children && <div className="p-4">{children}</div>}
     </header>
-  );
+  )
 }
