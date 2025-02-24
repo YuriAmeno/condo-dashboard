@@ -27,7 +27,7 @@ export const PackageLabel = forwardRef<HTMLDivElement, PackageLabelProps>(
       >
         <div className="flex items-center justify-center mb-4">
           <Package className="h-8 w-8 mr-2 text-primary" />
-          <span className="text-xl font-bold text-primary">Porta Dex</span>
+          <span className="text-xl font-bold text-primary">{data.building.name}</span>
         </div>
 
         <div className="flex justify-center mb-4">

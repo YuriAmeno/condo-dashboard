@@ -60,7 +60,7 @@
     "react-hook-form": "^7.50.1",
     "react-resizable-panels": "^2.0.9",
     "react-router-dom": "^6.22.1",
-    "react-signature-canvas": "^1.1.0-alpha.1",
+    "react-signature-pad-wrapper": "^4.1.0",
     "react-to-print": "^2.15.1",
     "recharts": "^2.12.0",
     "sonner": "^1.4.3",

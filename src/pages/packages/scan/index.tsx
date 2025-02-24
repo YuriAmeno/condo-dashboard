@@ -42,8 +42,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useToast } from '@/hooks/use-toast'
 import { packageConfirm } from '../core/_requests'
-import SignatureCanvas from 'react-signature-canvas'
 import { useTheme } from '@/components/theme-provider'
+import SignaturePad from 'react-signature-pad-wrapper'
 
 export function PackageScan() {
   const [qrCode, setQrCode] = useState<string | null>(null)
@@ -59,6 +59,8 @@ export function PackageScan() {
   const { data: recentDeliveries } = useRecentDeliveries()
   const deliveryMutation = usePackageDelivery()
   const [signature, setSignature] = useState<string | undefined>()
+  const sigCanvas = useRef<any>(null)
+  const [isEmpty, setIsEmpty] = useState(true)
 
   const handleScanResult = useCallback((result: string) => {
     setQrCode(result)
@@ -153,9 +155,6 @@ export function PackageScan() {
     }
   }, [toggleScanner])
 
-  const sigCanvas = useRef<SignatureCanvas | null>(null)
-  const [isEmpty, setIsEmpty] = useState(true)
-
   const handleCleanSignature = () => {
     sigCanvas.current?.clear()
     setSignature('')
@@ -163,11 +162,9 @@ export function PackageScan() {
   }
 
   const handleSaveSignature = () => {
-    if (!sigCanvas.current?.isEmpty) {
-      const dataSignature = sigCanvas?.current?.getTrimmedCanvas().toDataURL('image/png')
-      setSignature(String(dataSignature))
-      setIsEmpty(false)
-    }
+    const dataURL = sigCanvas.current.toDataURL()
+    setSignature(dataURL)
+    setIsEmpty(false)
   }
 
   return (
@@ -406,18 +403,37 @@ export function PackageScan() {
           </div>
 
           <div className="space-y-2">
-            <SignatureCanvas
+            <label
+              htmlFor="notes"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Assinatura Morador
+            </label>
+            <SignaturePad
               ref={sigCanvas}
-              canvasProps={{ width: 450, height: 200, className: 'border' }}
-              penColor={theme == 'light' ? 'white' : 'black'}
+              options={{
+                penColor: theme == 'light' ? 'black' : 'white',
+                minWidth: 1,
+                maxWidth: 3,
+              }}
             />
             <div>
+              <Button onClick={handleSaveSignature} variant="outline">
+                Confirmar
+              </Button>
               <Button onClick={handleCleanSignature} variant="outline">
                 Limpar
               </Button>
             </div>
           </div>
-
+          <label
+            htmlFor="notes"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            hidden={signature == '' ? true : false}
+          >
+            Prévia Assinatura
+          </label>
+          <img src={signature} alt="" />
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeliveryDialog(false)}>
               Cancelar
