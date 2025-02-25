@@ -10,7 +10,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
 import { Package } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useLayout } from '../core/useLayout'
 
 interface PackagePeding {
@@ -33,6 +33,7 @@ export const PackagePending = ({ userLogged }: PackagePeding) => {
         ), resident:residents!inner(*)`,
         )
         .in('apartment.building.user_id', [userLogged?.relatedId, userLogged?.doormanUserId])
+        .eq('status', 'pending')
 
       if (error) {
         toast({
@@ -60,7 +61,7 @@ export const PackagePending = ({ userLogged }: PackagePeding) => {
       </TableHeader>
       <TableBody>
         {packs?.map((pack: any) => {
-          const statusPack = packVerified.some((val: any) => val[0] == pack.id)
+          const statusPack = packVerified.some((val: any) => val == pack.id)
           return (
             <TableRow key={pack.id}>
               <TableCell className="font-medium">

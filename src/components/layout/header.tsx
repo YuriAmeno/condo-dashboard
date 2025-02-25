@@ -12,13 +12,21 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/hooks/use-toast'
 import { useUserType } from '@/hooks/queryUser'
-import { useEffect, useState } from 'react'
-import { Dialog, DialogDescription, DialogTitle, DialogTrigger } from '@radix-ui/react-dialog'
+import { useCallback, useEffect, useState } from 'react'
+import { Dialog, DialogDescription, DialogTitle } from '@radix-ui/react-dialog'
 import { DialogContentBuilding, DialogHeader } from '../ui/dialog'
 import { Card, CardContent, CardHeader } from '../ui/card'
 import { PackagePending } from './logout/packagesPending'
 import { ScanPackages } from './logout/scanPackages'
 import { useLayout } from './core/useLayout'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { supabase } from '@/lib/supabase'
 
 interface HeaderProps {
   children?: React.ReactNode
@@ -29,7 +37,20 @@ export function Header({ children }: HeaderProps) {
   const { toast } = useToast()
   const userLogged = useUserType()
 
-  const { packVerified, packs, openPackagePending, setOpenPackage } = useLayout()
+  const {
+    packVerified,
+    packs,
+    openPackagePending,
+    setOpenPackage,
+    setDoormens,
+    doormens,
+    disableBtn,
+    setDisable,
+    showSelect,
+    setShowSelect,
+    selectedDoormen,
+    setSelectedDoormen,
+  } = useLayout()
 
   const handleSignOut = async () => {
     const userCurrent = userLogged.data
@@ -48,8 +69,56 @@ export function Header({ children }: HeaderProps) {
   }
 
   useEffect(() => {
-    console.log(packVerified)
+    const idsPack = packs?.map((val: any) => val.id)
+
+    const arraysEquals = (arr1: [], arr2: []) => {
+      if (arr1?.length !== arr2?.length) return false
+
+      const sorted1 = [...arr1].sort((a, b) => a - b)
+      const sorted2 = [...arr2].sort((a, b) => a - b)
+
+      return sorted1.every((valor, index) => valor === sorted2[index])
+    }
+    const allPacksVerfied = arraysEquals(idsPack, packVerified)
+
+    if (allPacksVerfied) {
+      setDisable(false)
+    }
   }, [packVerified])
+
+  const handleDoorman = useCallback(() => {
+    setShowSelect(true)
+    async function initialize() {
+      const { data, error } = await supabase
+        .from('doormen')
+        .select('*')
+        .eq('manager_id', userLogged?.data?.managerId)
+        .neq('id', userLogged?.data?.doormenId)
+
+      if (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao buscar porteiros',
+          description: 'Não foi possível buscar porteiros. Tente novamente.',
+        })
+      }
+
+      setDoormens(data)
+    }
+
+    initialize()
+  }, [])
+
+  async function handleChangeTurn() {
+    const { error } = await signOut()
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao sair',
+        description: 'Não foi possível fazer logout. Tente novamente.',
+      })
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -94,22 +163,48 @@ export function Header({ children }: HeaderProps) {
               <Card>
                 <CardHeader>Pacotes Pendentes</CardHeader>
                 <CardContent>
-                  <PackagePending
-                    userLogged={userLogged.data}
-                    // handlePack={(dta) => getPackages(dta)}
-                  />
+                  <PackagePending userLogged={userLogged.data} />
                 </CardContent>
               </Card>
 
-              <Card className="mt-5">
+              <Card className="mt-5" hidden={disableBtn == false ? true : false}>
                 <CardHeader>Escanear Pacotes</CardHeader>
                 <CardContent>
-                  <ScanPackages
-                  // packagesPending={packs}
-                  // handleVerifyPack={(dta: any) => handleVerifiedPack(dta)}
-                  />
+                  <ScanPackages />
                 </CardContent>
               </Card>
+              {!showSelect && (
+                <div className="mt-5 flex justify-center">
+                  <Button disabled={disableBtn} onClick={handleDoorman}>
+                    Confirmar
+                  </Button>
+                </div>
+              )}
+
+              {showSelect && (
+                <div className="mt-5 flex justify-center">
+                  <Select
+                    onValueChange={(value) => setSelectedDoormen(value)}
+                    value={selectedDoormen}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma torre" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {doormens?.map((doorman: any) => (
+                        <SelectItem key={doorman.id} value={doorman.id}>
+                          {doorman.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Button onClick={handleChangeTurn}>
+                    <Icons.LogOut className="mr-2 h-4 w-4" />
+                    Trocar Turno
+                  </Button>
+                </div>
+              )}
             </div>
           </DialogContentBuilding>
         </Dialog>

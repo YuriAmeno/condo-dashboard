@@ -56,10 +56,6 @@ export function PackageList() {
     return matchesSearch && matchesBuilding && matchesStatus
   })
 
-  const openDetail = (dtaPack: any) => {
-    console.log(dtaPack)
-  }
-
   const handlePrint = useReactToPrint({
     content: () => labelRef.current,
   })
@@ -196,7 +192,6 @@ export function PackageList() {
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
-                    <Button variant="ghost" size="sm" onClick={() => openDetail(pkg)} />
                   </TableCell>
                 </TableRow>
               ))}

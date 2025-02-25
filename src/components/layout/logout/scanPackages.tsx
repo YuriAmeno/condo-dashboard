@@ -15,19 +15,23 @@ interface ScanPackages {
 }
 export const ScanPackages = () => {
   const [qrCode, setQrCode] = useState<string | null>(null)
-  const { data: package_, isLoading: isLoadingPackage } = usePackageByQR(qrCode)
+  const { data: package_ } = usePackageByQR(qrCode)
   const { toast } = useToast()
-  const { setVerifiedPack, packs } = useLayout()
+  const { setVerifiedPack, packs, showSelect } = useLayout()
   const playSuccessSound = () => {
     const audio = new Audio('/sounds/beep.mp3')
     audio.play().catch(() => {})
   }
 
   useEffect(() => {
+    toggleScanner
+  }, [showSelect])
+
+  useEffect(() => {
     if (package_) {
       const hasIdWithPending = packs.some((val: any) => val.id == package_.id)
       if (hasIdWithPending) {
-        const newPack = [package_.id, true]
+        const newPack = package_.id
         return setVerifiedPack((prevPacks: any) => [...prevPacks, newPack])
       }
       toast({
