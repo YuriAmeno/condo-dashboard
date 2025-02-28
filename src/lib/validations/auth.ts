@@ -43,9 +43,17 @@ export const registerSchema = z.object({
     .min(14, 'Telefone inválido')
     .max(15, 'Telefone inválido')
     .regex(/^\(\d{2}\) \d{5}-\d{4}$/, 'Formato inválido. Use (00) 00000-0000'),
-  building_name: z.string().min(1, 'Nome do condomínio é obrigatório'),
+  apartment_complex_name: z.string().min(1, 'Nome do condomínio é obrigatório'),
   password: passwordSchema,
   confirmPassword: z.string(),
+  delivery_company: z.string(),
+  custom_delivery_company: z.string().optional().or(z.literal('')).transform(val => 
+    val === '' ? undefined : val
+  ),
+  store_name: z.string(),
+  custom_store_name: z.string().optional().or(z.literal('')).transform(val => 
+    val === '' ? undefined : val
+  ),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'As senhas não coincidem',
   path: ['confirmPassword'],

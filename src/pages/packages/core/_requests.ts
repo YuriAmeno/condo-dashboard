@@ -1,5 +1,6 @@
 import axios from "axios";
-import type { PackageRegisterReq } from "./_models";
+import type { Company, PackageRegisterReq, Store } from "./_models";
+import { supabase } from "@/lib/supabase";
 const WEB_HOOK_URL = "https://hook.2be.com.br/webhook";
 const headers = {
   "Content-Type": "application/json",
@@ -19,3 +20,16 @@ export const packageConfirm = (data: PackageRegisterReq) => {
     headers: headers,
   });
 };
+
+export async function getCompanies() {
+  const { data: companies, error } = await supabase.from("company").select("*");
+  if (error) throw error;
+  return companies as Company[];
+}
+
+export async function getStores(){
+  const {data: stores , error} = await supabase.from('store').select('*');
+  if (error) throw error;
+  return stores as Store[];
+}
+

@@ -41,41 +41,20 @@ export function useResidentNotificationHistory(residentId: string | null) {
               type,
               title
             ),
-            package:packages!inner(*)
+            package:packages!inner(*, apartment:apartments!inner(building:buildings!inner(id, manager:managers!inner(apartment_complex_id))))
           )
         `
         )
 
         .eq("queue.resident_id", residentId)
+        .eq("queue.apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id)
         .order("created_at", { ascending: false });
-
-      if (userType?.type === "manager") {
-        const { data: doormen, error: doormenError } = await supabase
-          .from("doormen")
-          .select("user_id")
-          .eq("manager_id", userType.managerId);
-
-        if (doormenError) {
-          console.error("Error fetching doormen:", doormenError);
-          return null;
-        }
-
-        const doormenIds = doormen.map((d) => d.user_id);
-        doormenIds.push(userType.relatedId);
-
-        query = query.in("queue.resident.user_id", doormenIds);
-      } else {
-        query = query.in("queue.resident.user_id", [
-          userType?.relatedId,
-          userType?.doormanUserId,
-        ]);
-      }
 
       const { data, error } = await query;
 
       if (error) throw error;
       return data as NotificationLog[];
     },
-    enabled: !!residentId && !!userTypeQuery.data,
+    enabled: !!residentId && !!userTypeQuery.isLoading,
   });
 }

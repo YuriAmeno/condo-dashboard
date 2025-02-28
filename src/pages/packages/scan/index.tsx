@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import { format, formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { format, formatDistanceToNow } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import {
   Camera,
   QrCode,
@@ -13,23 +13,23 @@ import {
   CalendarClock,
   CheckCircle2,
   AlertCircle,
-} from "lucide-react";
-import { useQRCodeScanner } from "@/hooks/use-qr-code-scanner";
-import { usePackageByQR } from "@/hooks/use-package-by-qr";
-import { usePackageDelivery } from "@/hooks/use-package-delivery";
-import { useRecentDeliveries } from "@/hooks/use-recent-deliveries";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+} from 'lucide-react'
+import { useQRCodeScanner } from '@/hooks/use-qr-code-scanner'
+import { usePackageByQR } from '@/hooks/use-package-by-qr'
+import { usePackageDelivery } from '@/hooks/use-package-delivery'
+import { useRecentDeliveries } from '@/hooks/use-recent-deliveries'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from '@/components/ui/sheet'
 import {
   Dialog,
   DialogContent,
@@ -37,117 +37,146 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { packageConfirm } from "../core/_requests";
+} from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { useToast } from '@/hooks/use-toast'
+import { packageConfirm } from '../core/_requests'
+import { useTheme } from '@/components/theme-provider'
+import SignaturePad from 'react-signature-pad-wrapper'
+import { createSignature } from '@/API/signature'
+import { useAuth } from '@/lib/auth'
 
 export function PackageScan() {
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [manualCode, setManualCode] = useState("");
-  const [showDeliveryDialog, setShowDeliveryDialog] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [deliveryNotes, setDeliveryNotes] = useState("");
-  const { toast } = useToast();
+  const [qrCode, setQrCode] = useState<string | null>(null)
+  const { user } = useAuth()
+  const [manualCode, setManualCode] = useState('')
+  const [showDeliveryDialog, setShowDeliveryDialog] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [deliveryNotes, setDeliveryNotes] = useState('')
+  const { toast } = useToast()
 
-  const { data: package_, isLoading: isLoadingPackage } =
-    usePackageByQR(qrCode);
-  const { data: recentDeliveries } = useRecentDeliveries();
-  const deliveryMutation = usePackageDelivery();
+  const { theme } = useTheme()
+
+  const { data: package_, isLoading: isLoadingPackage } = usePackageByQR(qrCode)
+  const { data: recentDeliveries } = useRecentDeliveries()
+  const deliveryMutation = usePackageDelivery()
+  const [signature, setSignature] = useState<string | undefined>()
+  const sigCanvas = useRef<any>(null)
+  const [isEmpty, setIsEmpty] = useState(true)
 
   const handleScanResult = useCallback((result: string) => {
-    setQrCode(result);
-    playSuccessSound();
+    setQrCode(result)
+    playSuccessSound()
     if (navigator.vibrate) {
-      navigator.vibrate(200);
+      navigator.vibrate(200)
     }
-  }, []);
+  }, [])
 
   const handleScanError = useCallback(
     (error: string) => {
       if (
-        error.includes("NotFound") ||
-        error.includes("No barcode") ||
-        error.includes("MultiFormat")
+        error.includes('NotFound') ||
+        error.includes('No barcode') ||
+        error.includes('MultiFormat')
       ) {
-        return;
+        return
       }
       toast({
-        variant: "destructive",
-        title: "Erro no Scanner",
+        variant: 'destructive',
+        title: 'Erro no Scanner',
         description: error,
-      });
+      })
     },
-    [toast]
-  );
+    [toast],
+  )
 
   const { isScanning, toggleScanner } = useQRCodeScanner({
     onResult: handleScanResult,
     onError: handleScanError,
-  });
+  })
 
   const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (manualCode) {
-      setQrCode(manualCode);
-      setManualCode("");
+      setQrCode(manualCode)
+      setManualCode('')
     }
-  };
+  }
 
   const handleDeliveryConfirm = async () => {
-    if (!package_) return;
+    if (!package_) return
 
     try {
+      const signatureData = {
+        apartment_complex_id: String(user?.apartment_complex_id),
+        signature_url: String(signature),
+      }
+
+      const signaturResp = await createSignature(signatureData)
+
       await deliveryMutation.mutateAsync({
         packageId: package_.id,
         notes: deliveryNotes,
-      });
+        signatureId: signaturResp.id,
+      })
 
       const dataSendWebHook = {
         delivery_company: package_.delivery_company,
         store_name: package_.store_name,
         resident_id: String(package_.resident_id),
         package_id: String(package_.id),
-      };
+      }
 
-      await packageConfirm(dataSendWebHook);
+      await packageConfirm(dataSendWebHook)
       toast({
-        title: "Encomenda entregue com sucesso!",
-        description: "A baixa foi registrada no sistema.",
-      });
+        title: 'Encomenda entregue com sucesso!',
+        description: 'A baixa foi registrada no sistema.',
+      })
 
-      setShowDeliveryDialog(false);
-      setDeliveryNotes("");
-      setQrCode(null);
-    } catch (error) {
+      setShowDeliveryDialog(false)
+      setDeliveryNotes('')
+      setQrCode(null)
+    } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Erro ao registrar entrega",
-        description: "Tente novamente em alguns instantes.",
-      });
+        variant: 'destructive',
+        title: 'Erro ao registrar entrega',
+        description: error.message,
+      })
     }
-  };
+  }
 
   const playSuccessSound = () => {
-    const audio = new Audio("/sounds/beep.mp3");
+    const audio = new Audio('/sounds/beep.mp3')
     audio.play().catch(() => {
       // Ignore audio play errors
-    });
-  };
+    })
+  }
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === "KeyQ" && e.ctrlKey) {
-        toggleScanner("qr-reader");
+      if (e.code === 'KeyQ' && e.ctrlKey) {
+        toggleScanner('qr-reader')
       }
-    };
+    }
 
-    window.addEventListener("keydown", handleKeyPress);
+    window.addEventListener('keydown', handleKeyPress)
     return () => {
-      window.removeEventListener("keydown", handleKeyPress);
-    };
-  }, [toggleScanner]);
+      window.removeEventListener('keydown', handleKeyPress)
+    }
+  }, [toggleScanner])
+
+  const handleCleanSignature = () => {
+    sigCanvas.current?.clear()
+    setSignature('')
+    setIsEmpty(true)
+  }
+
+  const handleSaveSignature = () => {
+    const dataURL = sigCanvas.current.toDataURL()
+    setSignature(dataURL)
+    setIsEmpty(false)
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -177,18 +206,16 @@ export function PackageScan() {
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
                   <div className="text-center">
                     <Camera className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Scanner desligado
-                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">Scanner desligado</p>
                   </div>
                 </div>
               )}
             </div>
 
             <Button
-              onClick={() => toggleScanner("qr-reader")}
+              onClick={() => toggleScanner('qr-reader')}
               className="w-full"
-              variant={isScanning ? "destructive" : "default"}
+              variant={isScanning ? 'destructive' : 'default'}
             >
               {isScanning ? (
                 <>
@@ -206,9 +233,7 @@ export function PackageScan() {
             <Separator />
 
             <form onSubmit={handleManualSubmit} className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Ou insira o código manualmente:
-              </p>
+              <p className="text-sm text-muted-foreground">Ou insira o código manualmente:</p>
               <div className="flex space-x-2">
                 <Input
                   value={manualCode}
@@ -236,31 +261,22 @@ export function PackageScan() {
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Torre/Apartamento
-                    </span>
+                    <span className="text-sm text-muted-foreground">Torre/Apartamento</span>
                   </div>
                   <p className="font-medium">
-                    {package_?.apartment?.building?.name} - Apto{" "}
-                    {package_?.apartment?.number}
+                    {package_?.apartment?.building?.name} - Apto {package_?.apartment?.number}
                   </p>
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Recebido em
-                    </span>
+                    <span className="text-sm text-muted-foreground">Recebido em</span>
                   </div>
                   <p className="font-medium">
-                    {format(
-                      new Date(package_.received_at),
-                      "dd/MM/yyyy 'às' HH:mm",
-                      {
-                        locale: ptBR,
-                      }
-                    )}
+                    {format(new Date(package_.received_at), "dd/MM/yyyy 'às' HH:mm", {
+                      locale: ptBR,
+                    })}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {formatDistanceToNow(new Date(package_.received_at), {
@@ -273,9 +289,7 @@ export function PackageScan() {
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Porteiro
-                    </span>
+                    <span className="text-sm text-muted-foreground">Porteiro</span>
                   </div>
                   <p className="font-medium">{package_.doorman_name}</p>
                 </div>
@@ -283,24 +297,15 @@ export function PackageScan() {
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <Package className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Status
-                    </span>
+                    <span className="text-sm text-muted-foreground">Status</span>
                   </div>
-                  <Badge
-                    variant={
-                      package_.status === "delivered" ? "default" : "secondary"
-                    }
-                  >
-                    {package_.status === "delivered" ? "Entregue" : "Pendente"}
+                  <Badge variant={package_.status === 'delivered' ? 'default' : 'secondary'}>
+                    {package_.status === 'delivered' ? 'Entregue' : 'Pendente'}
                   </Badge>
                 </div>
 
-                {package_.status === "pending" && (
-                  <Button
-                    className="w-full"
-                    onClick={() => setShowDeliveryDialog(true)}
-                  >
+                {package_.status === 'pending' && (
+                  <Button className="w-full" onClick={() => setShowDeliveryDialog(true)}>
                     <CheckCircle2 className="mr-2 h-4 w-4" />
                     Registrar Entrega
                   </Button>
@@ -344,21 +349,15 @@ export function PackageScan() {
           {recentDeliveries?.length ? (
             <div className="space-y-4">
               {recentDeliveries.map((delivery) => (
-                <div
-                  key={delivery.id}
-                  className="flex items-center justify-between"
-                >
+                <div key={delivery.id} className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">
-                      {delivery?.apartment?.building?.name} - Apto{" "}
-                      {delivery?.apartment?.number}
+                      {delivery?.apartment?.building?.name} - Apto {delivery?.apartment?.number}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {format(
-                        new Date(delivery.delivered_at!),
-                        "dd/MM/yyyy 'às' HH:mm",
-                        { locale: ptBR }
-                      )}
+                      {format(new Date(delivery.delivered_at!), "dd/MM/yyyy 'às' HH:mm", {
+                        locale: ptBR,
+                      })}
                     </p>
                   </div>
                   <Badge>Entregue</Badge>
@@ -370,9 +369,7 @@ export function PackageScan() {
               <Clock className="h-12 w-12 text-muted-foreground" />
               <div className="text-center">
                 <p className="font-medium">Nenhuma entrega recente</p>
-                <p className="text-sm text-muted-foreground">
-                  As últimas entregas aparecerão aqui
-                </p>
+                <p className="text-sm text-muted-foreground">As últimas entregas aparecerão aqui</p>
               </div>
             </div>
           )}
@@ -394,8 +391,7 @@ export function PackageScan() {
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Torre/Apartamento</p>
                   <p className="text-sm text-muted-foreground">
-                    {package_?.apartment?.building?.name} - Apto{" "}
-                    {package_?.apartment?.number}
+                    {package_?.apartment?.building?.name} - Apto {package_?.apartment?.number}
                   </p>
                 </div>
 
@@ -417,20 +413,47 @@ export function PackageScan() {
             )}
           </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeliveryDialog(false)}
+          <div className="space-y-2">
+            <label
+              htmlFor="notes"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
+              Assinatura Morador
+            </label>
+            <SignaturePad
+              ref={sigCanvas}
+              options={{
+                penColor: theme == 'light' ? 'black' : 'white',
+                minWidth: 1,
+                maxWidth: 3,
+              }}
+            />
+            <div>
+              <Button onClick={handleSaveSignature} variant="outline">
+                Confirmar
+              </Button>
+              <Button onClick={handleCleanSignature} variant="outline">
+                Limpar
+              </Button>
+            </div>
+          </div>
+          <label
+            htmlFor="notes"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            hidden={signature == '' ? true : false}
+          >
+            Prévia Assinatura
+          </label>
+          <img src={signature} alt="" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeliveryDialog(false)}>
               Cancelar
             </Button>
             <Button
               onClick={handleDeliveryConfirm}
-              disabled={deliveryMutation.isPending}
+              disabled={deliveryMutation.isPending || isEmpty}
             >
-              {deliveryMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {deliveryMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Confirmar Entrega
             </Button>
           </DialogFooter>
@@ -441,9 +464,7 @@ export function PackageScan() {
         <SheetContent>
           <SheetHeader>
             <SheetTitle>Histórico de Entregas</SheetTitle>
-            <SheetDescription>
-              Últimas encomendas entregues no sistema.
-            </SheetDescription>
+            <SheetDescription>Últimas encomendas entregues no sistema.</SheetDescription>
           </SheetHeader>
 
           <div className="mt-6 space-y-6">
@@ -451,27 +472,22 @@ export function PackageScan() {
               <div key={delivery.id} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="font-medium">
-                    {delivery?.apartment?.building?.name} - Apto{" "}
-                    {delivery?.apartment?.number}
+                    {delivery?.apartment?.building?.name} - Apto {delivery?.apartment?.number}
                   </p>
                   <Badge>Entregue</Badge>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">
-                    Entregue em:{" "}
-                    {format(
-                      new Date(delivery.delivered_at!),
-                      "dd/MM/yyyy 'às' HH:mm",
-                      { locale: ptBR }
-                    )}
+                    Entregue em:{' '}
+                    {format(new Date(delivery.delivered_at!), "dd/MM/yyyy 'às' HH:mm", {
+                      locale: ptBR,
+                    })}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Recebido por: {delivery.doorman_name}
                   </p>
                   {delivery.notes && (
-                    <p className="text-sm text-muted-foreground">
-                      Obs: {delivery.notes}
-                    </p>
+                    <p className="text-sm text-muted-foreground">Obs: {delivery.notes}</p>
                   )}
                 </div>
                 <Separator />
@@ -481,5 +497,5 @@ export function PackageScan() {
         </SheetContent>
       </Sheet>
     </div>
-  );
+  )
 }

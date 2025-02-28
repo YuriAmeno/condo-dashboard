@@ -38,6 +38,7 @@ export function useBuildingManagement() {
         .select(
           `
           *,
+          manager:managers!inner(apartment_complex_id),
           apartments:apartments (
             id,
             residents:residents (id),
@@ -45,7 +46,7 @@ export function useBuildingManagement() {
           )
         `
         )
-        .eq("user_id", userType?.relatedId)
+        .eq("manager.apartment_complex_id", userType?.apartment_complex_id)
         .order("name");
 
       if (buildingsError) throw buildingsError;
@@ -89,8 +90,10 @@ export function useBuildingManagement() {
 
   const createBuilding = useMutation({
     mutationFn: async (data: CreateBuildingData) => {
-      const { error } = await supabase.from("buildings").insert(data);
+      const { data: result, error } = await supabase.from("buildings").insert(data).select();
       if (error) throw error;
+    
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["buildings-with-stats"] });

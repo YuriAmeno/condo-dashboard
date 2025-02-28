@@ -6,6 +6,7 @@ import { useUserType } from "./queryUser";
 import { getDaysPeriod } from "@/helpers/filterDashboard";
 
 interface DashboardMetrics {
+  totalPackages: number;
   pendingPackages: number;
   deliveredToday: number;
   delayedPackages: number;
@@ -14,51 +15,35 @@ interface DashboardMetrics {
   totalNotifications: number;
 }
 
-export const useDashboardMetrics = (period: string, apartment?: any) => {
+export const useDashboardMetrics = (period: string, building?: any) => {
   const { user } = useAuth();
   const userTypeQuery = useUserType();
 
   return useQuery({
-    queryKey: ["dashboard-metrics", period, apartment],
+    queryKey: ["dashboard-metrics", period, building],
     queryFn: async () => {
       const today = startOfDay(new Date());
       const userType = userTypeQuery.data;
 
       const { start, end } = getDaysPeriod(period);
 
+      console.log(userType)
       let query = supabase
         .from("packages")
         .select(
           `*,apartment:apartments!inner(
           id,
           user_id,
-          building:buildings!inner(*)
+          building:buildings!inner(*, manager:managers!inner(apartment_complex_id))
         )`
         )
         .gte("created_at", start.toISOString())
-        .lt("created_at", end.toISOString());
-
-      if (userType?.type === "manager") {
-        const { data: doormen, error: doormenError } = await supabase
-          .from("doormen")
-          .select("user_id")
-          .eq("manager_id", userType.managerId);
-
-        if (doormenError) {
-          console.error("Error fetching doormen:", doormenError);
-          return null;
-        }
-
-        const doormenIds = doormen.map((d) => d.user_id);
-        doormenIds.push(userType.relatedId);
-
-        query = query.in("apartment.building.user_id", doormenIds);
-      } else {
-        query = query.in("apartment.building.user_id", [
-          userType?.relatedId,
-          userType?.doormanUserId,
-        ]);
+        .lt("created_at", end.toISOString())
+        .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id);
+      if (building) {
+        query = query.eq("apartment.building.id", building);
       }
+     
 
       const { data: packages, error } = await query;
 
@@ -104,6 +89,7 @@ export const useDashboardMetrics = (period: string, apartment?: any) => {
         (pendingPackages.length / storageCapacity) * 100;
 
       const metrics: DashboardMetrics = {
+        totalPackages: packages.length,
         pendingPackages: pendingPackages.length,
         deliveredToday: deliveredToday.length,
         delayedPackages: delayedPackages.length,
@@ -115,6 +101,6 @@ export const useDashboardMetrics = (period: string, apartment?: any) => {
       return metrics;
     },
     refetchInterval: 5 * 60 * 1000, // 5 minutes
-    enabled: !!user && !userTypeQuery.isLoading,
+    enabled: !!user && !!userTypeQuery.isLoading,
   });
 };
