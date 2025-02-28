@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 
 export const useUserType = () => {
   const { user } = useAuth()
-  console.log(user)
   return useQuery({
     queryKey: ['user_type', user?.id], // Mantém o cache por usuário específico
     queryFn: async (): Promise<{

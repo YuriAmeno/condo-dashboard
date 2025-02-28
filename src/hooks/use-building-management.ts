@@ -90,13 +90,9 @@ export function useBuildingManagement() {
 
   const createBuilding = useMutation({
     mutationFn: async (data: CreateBuildingData) => {
-      console.log('Dados sendo enviados para o Supabase:', data);
-      
       const { data: result, error } = await supabase.from("buildings").insert(data).select();
       if (error) throw error;
-      
-      console.log('Dados retornados pelo Supabase:', result);
-      
+    
       return result;
     },
     onSuccess: () => {
