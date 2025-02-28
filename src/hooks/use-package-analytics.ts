@@ -36,11 +36,11 @@ interface PackageAnalytics {
   statusStats: StatusStats[];
 }
 
-export function usePackageAnalytics(period: string, apartment?: any) {
+export function usePackageAnalytics(period: string, building?: any) {
   const userTypeQuery = useUserType();
 
   return useQuery({
-    queryKey: ["package-analytics", period, apartment],
+    queryKey: ["package-analytics", period, building],
     queryFn: async () => {
       const userType = userTypeQuery.data;
       if (!userType) return;
@@ -54,34 +54,17 @@ export function usePackageAnalytics(period: string, apartment?: any) {
           *,
           apartment:apartments!inner(
           id,
-          building:buildings!inner(*)
+          building:buildings!inner(*, manager:managers!inner(apartment_complex_id))
         )
         `
         )
-        // .neq("apartment.building_id", "")
+      
         .gte("created_at", start.toISOString())
-        .lt("created_at", end.toISOString());
+        .lt("created_at", end.toISOString())
+        .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id);
 
-      if (userType?.type === "manager") {
-        const { data: doormen, error: doormenError } = await supabase
-          .from("doormen")
-          .select("user_id")
-          .eq("manager_id", userType.managerId);
-
-        if (doormenError) {
-          console.error("Error fetching doormen:", doormenError);
-          return null;
-        }
-
-        const doormenIds = doormen.map((d) => d.user_id);
-        doormenIds.push(userType.relatedId);
-
-        query = query.in("apartment.building.user_id", doormenIds);
-      } else {
-        query = query.in("apartment.building.user_id", [
-          userType?.relatedId,
-          userType?.doormanUserId,
-        ]);
+       if (building) {
+        query = query.eq("apartment.building.id", building);
       }
 
       const { data: packages, error } = await query;

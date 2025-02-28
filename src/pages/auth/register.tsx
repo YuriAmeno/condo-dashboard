@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Package, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { registerSchema, type RegisterFormData } from "@/lib/validations/auth";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Package, Loader2 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { registerSchema, type RegisterFormData } from '@/lib/validations/auth'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -13,31 +13,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { applyPhoneMaskRegister, formatPhoneForDB } from "@/lib/utils";
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { useToast } from '@/hooks/use-toast'
+import { applyPhoneMaskRegister, formatPhoneForDB } from '@/lib/utils'
 
 export function Register() {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isCreating, setIsCreating] = useState(false);
+  const navigate = useNavigate()
+  const { toast } = useToast()
+  const [isCreating, setIsCreating] = useState(false)
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      building_name: "",
-      password: "",
-      confirmPassword: "",
+      name: '',
+      email: '',
+      phone: '',
+      apartment_complex_name: '',
+      password: '',
+      confirmPassword: '',
     },
-  });
+  })
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      setIsCreating(true);
+      setIsCreating(true)
 
       // 1. Criar usuário no Supabase Auth com role 'manager'
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -45,92 +45,91 @@ export function Register() {
         password: data.password,
         options: {
           data: {
-            role: "manager",
+            role: 'manager',
             is_active: true,
           },
           emailRedirectTo: `${window.location.origin}/auth/login`,
         },
-      });
+      })
 
       if (authError) {
-        if (authError.message.includes("already registered")) {
+        if (authError.message.includes('already registered')) {
           toast({
-            variant: "destructive",
-            title: "Email já cadastrado",
-            description: "Este email já está sendo usado por outra conta.",
-          });
+            variant: 'destructive',
+            title: 'Email já cadastrado',
+            description: 'Este email já está sendo usado por outra conta.',
+          })
         } else {
           toast({
-            variant: "destructive",
-            title: "Erro no cadastro",
+            variant: 'destructive',
+            title: 'Erro no cadastro',
             description: authError.message,
-          });
+          })
         }
-        return;
+        return
       }
 
       if (!authData.user) {
         toast({
-          variant: "destructive",
-          title: "Erro no cadastro",
-          description: "Não foi possível criar o usuário.",
-        });
-        return;
+          variant: 'destructive',
+          title: 'Erro no cadastro',
+          description: 'Não foi possível criar o usuário.',
+        })
+        return
       }
 
-      // 2. Criar registro do manager
-      const { error: managerError } = await supabase.from("managers").insert({
-        user_id: authData.user.id,
-        name: data.name,
-        email: data.email,
-        phone: formatPhoneForDB(data.phone),
-        building_name: data.building_name,
-      });
+      // 3. Criar complexo inicial
+      const { data: complexData, error: complexError } = await supabase
+        .from('apartment_complex')
+        .insert({
+          name: data.apartment_complex_name,
+        })
+        .select()
+        .single()
 
-      if (managerError) {
-        // Limpar usuário criado em caso de erro
-        await supabase.auth.admin.deleteUser(authData.user.id);
-
+      if (complexError) {
         toast({
-          variant: "destructive",
-          title: "Erro no cadastro",
-          description:
-            "Não foi possível completar o cadastro. Tente novamente.",
-        });
-        return;
+          variant: 'destructive',
+          title: 'Erro ao criar condomínio',
+          description: 'O cadastro foi realizado, mas não foi possível criar o condomínio inicial.',
+        })
       }
 
-      // 3. Criar building inicial
-      const { error: buildingError } = await supabase.from("buildings").insert({
-        name: data.building_name,
-      });
+      if (complexData) {
+        // 3. Criar registro do manager
+        const { error: managerError } = await supabase.from('managers').insert({
+          user_id: authData.user.id,
+          name: data.name,
+          email: data.email,
+          phone: formatPhoneForDB(data.phone),
+          apartment_complex_id: complexData?.id,
+        })
 
-      if (buildingError) {
-        toast({
-          variant: "destructive",
-          title: "Erro ao criar prédio",
-          description:
-            "O cadastro foi realizado, mas não foi possível criar o prédio inicial.",
-        });
+        if (managerError) {
+          // Limpar usuário criado em caso de erro
+          await supabase.auth.admin.deleteUser(authData.user.id)
+          await supabase.from('apartment_complex').delete().eq('id', complexData?.id)
+          toast({
+            variant: 'destructive',
+            title: 'Erro no cadastro',
+            description: 'Não foi possível completar o cadastro. Tente novamente.',
+          })
+          return
+        }
+
+        navigate('/auth/login')
       }
-
-      toast({
-        title: "Cadastro realizado com sucesso!",
-        description: "Você já pode fazer login no sistema.",
-      });
-
-      navigate("/auth/login");
     } catch (error) {
-      console.error("Error creating manager:", error);
+      console.error('Error creating manager:', error)
       toast({
-        variant: "destructive",
-        title: "Erro inesperado",
-        description: "Não foi possível completar o cadastro. Tente novamente.",
-      });
+        variant: 'destructive',
+        title: 'Erro inesperado',
+        description: 'Não foi possível completar o cadastro. Tente novamente.',
+      })
     } finally {
-      setIsCreating(false);
+      setIsCreating(false)
     }
-  };
+  }
 
   return (
     <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
@@ -142,21 +141,15 @@ export function Register() {
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
-            <p className="text-lg">
-              Sistema de gestão de encomendas para condomínios.
-            </p>
+            <p className="text-lg">Sistema de gestão de encomendas para condomínios.</p>
           </blockquote>
         </div>
       </div>
       <div className="lg:p-8">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Criar Conta
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Cadastre seu condomínio no sistema
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">Criar Conta</h1>
+            <p className="text-sm text-muted-foreground">Cadastre seu condomínio no sistema</p>
           </div>
 
           <Form {...form}>
@@ -168,11 +161,7 @@ export function Register() {
                   <FormItem>
                     <FormLabel>Nome Completo</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Seu nome"
-                        {...field}
-                        disabled={isCreating}
-                      />
+                      <Input placeholder="Seu nome" {...field} disabled={isCreating} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -209,8 +198,8 @@ export function Register() {
                         placeholder="(00) 00000-0000"
                         {...field}
                         onChange={(e) => {
-                          const masked = applyPhoneMaskRegister(e.target.value);
-                          onChange(masked);
+                          const masked = applyPhoneMaskRegister(e.target.value)
+                          onChange(masked)
                         }}
                         disabled={isCreating}
                       />
@@ -222,7 +211,7 @@ export function Register() {
 
               <FormField
                 control={form.control}
-                name="building_name"
+                name="apartment_complex_name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nome do Condomínio</FormLabel>
@@ -283,18 +272,18 @@ export function Register() {
                     Cadastrando...
                   </>
                 ) : (
-                  "Cadastrar"
+                  'Cadastrar'
                 )}
               </Button>
             </form>
           </Form>
 
           <p className="px-8 text-center text-sm text-muted-foreground">
-            Já tem uma conta?{" "}
+            Já tem uma conta?{' '}
             <Button
               variant="link"
               className="underline underline-offset-4 hover:text-primary"
-              onClick={() => navigate("/auth/login")}
+              onClick={() => navigate('/auth/login')}
               disabled={isCreating}
             >
               Fazer login
@@ -303,5 +292,5 @@ export function Register() {
         </div>
       </div>
     </div>
-  );
+  )
 }

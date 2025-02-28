@@ -6,12 +6,12 @@ import { useUserType } from "./queryUser";
 
 type Building = Database["public"]["Tables"]["buildings"]["Row"];
 
-export function useBuildings(period: string, apartment?: any) {
+export function useBuildings(period: string, building?: any) {
   const { user } = useAuth();
   const userTypeQuery = useUserType();
 
   return useQuery({
-    queryKey: ["buildings", user?.id, period, apartment],
+    queryKey: ["buildings", user?.id, period, building],
     queryFn: async () => {
       const userType = await userTypeQuery.data;
 
@@ -19,19 +19,17 @@ export function useBuildings(period: string, apartment?: any) {
         .from("buildings")
         .select(
           `
-          *,
+          *, manager:managers!inner(apartment_complex_id),
           apartment:apartments (
             *
           )
         `
         )
-        .eq("user_id", userType?.relatedId)
+        .eq("manager.apartment_complex_id", userType?.apartment_complex_id)
 
         .order("name");
 
-      if (apartment) {
-        query = query.eq("apartment.id", apartment);
-      }
+       
 
       const { data, error } = await query;
 
@@ -55,19 +53,20 @@ export function useBuildingsList() {
   return useQuery({
     queryKey: ["buildings", user?.id],
     queryFn: async () => {
-      const userType = await userTypeQuery.data;
+      const userType = userTypeQuery.data;
 
       const { data, error } = await supabase
         .from("buildings")
         .select(
           `
           *,
+          manager:managers!inner(apartment_complex_id),
           apartment:apartments (
             *
           )
         `
         )
-        .eq("user_id", userType?.relatedId)
+        .eq("manager.apartment_complex_id", userType?.apartment_complex_id)
 
         .order("name");
 

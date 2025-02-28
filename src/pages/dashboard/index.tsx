@@ -45,6 +45,7 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { PieChart, Pie } from '@/components/ui/chart'
 import { Cell, Legend, ResponsiveContainer, Tooltip } from 'recharts'
+import { supabase } from '@/lib/supabase'
 
 export function Dashboard() {
   const navigate = useNavigate()
@@ -102,6 +103,11 @@ export function Dashboard() {
     }
   }, [metrics])
 
+  // const handleLogout = () => {
+  //   supabase.auth.signOut()
+  //   navigate('/login')
+  // }
+  // handleLogout()
   return (
     <div className="space-y-6 p-4">
       {/* Header com título e filtros */}

@@ -43,7 +43,7 @@ export const registerSchema = z.object({
     .min(14, 'Telefone inválido')
     .max(15, 'Telefone inválido')
     .regex(/^\(\d{2}\) \d{5}-\d{4}$/, 'Formato inválido. Use (00) 00000-0000'),
-  building_name: z.string().min(1, 'Nome do condomínio é obrigatório'),
+  apartment_complex_name: z.string().min(1, 'Nome do condomínio é obrigatório'),
   password: passwordSchema,
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {

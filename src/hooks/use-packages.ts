@@ -29,10 +29,12 @@ export function usePackages(options: UsePackagesOptions = {}) {
           *,
           apartment:apartments (
             *,
-            building:buildings (*)
+            building:buildings (*, manager:managers!(apartment_complex_id)),
+
           ),
           resident:residents (*)
-        `);
+        `)
+        .eq("apartment.building.manager.apartment_complex_id", user?.apartment_complex_id);
 
       if (options.status) {
         query = query.eq('status', options.status);
@@ -55,7 +57,7 @@ export function usePackages(options: UsePackagesOptions = {}) {
       const { data, error } = await query;
       if (error) throw error;
 
-      return data as Package[];
+       return data as unknown as Package[]; 
     },
     refetchInterval: options.status === 'pending' ? 30 * 1000 : false,
     enabled: !!user,

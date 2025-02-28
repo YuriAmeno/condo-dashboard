@@ -10,12 +10,12 @@ type Package = Database['public']['Tables']['packages']['Row'] & {
   }
 }
 
-export function useRecentPackages(period: string, apartment?: any) {
+export function useRecentPackages(period: string, building?: any) {
   const userTypeQuery = useUserType()
   const limit = 10
 
   return useQuery({
-    queryKey: ['recent-packages', period, apartment],
+    queryKey: ['recent-packages', period, building],
     queryFn: async () => {
       const userType = userTypeQuery.data
 
@@ -28,39 +28,24 @@ export function useRecentPackages(period: string, apartment?: any) {
         *,
         apartment:apartments!inner(
           *,
-          building:buildings!inner(*)
+          building:buildings!inner(
+            *,
+            manager:managers!inner(apartment_complex_id)
+          )
         )
         `,
         )
-        // .neq("apartment.building_id", null)
-
         .gte('created_at', start.toISOString())
         .lt('created_at', end.toISOString())
         .order('created_at', { ascending: false })
         .limit(limit)
+        .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id);
 
-      if (userType?.type === 'manager') {
-        const { data: doormen, error: doormenError } = await supabase
-          .from('doormen')
-          .select('user_id')
-          .eq('manager_id', userType.managerId)
 
-        if (doormenError) {
-          console.error('Error fetching doormen:', doormenError)
-          return null
-        }
-
-        const doormenIds = doormen.map((d) => d.user_id)
-        doormenIds.push(userType.relatedId)
-
-        query = query.in('apartment.building.user_id', doormenIds)
-      } else {
-        query = query.in('apartment.building.user_id', [
-          userType?.relatedId,
-          userType?.doormanUserId,
-        ])
+      if (building) {
+        query = query.eq("apartment.building.id", building);
       }
-
+    
       const { data: packages, error } = await query
 
       if (error) throw error

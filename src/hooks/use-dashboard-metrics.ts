@@ -14,12 +14,12 @@ interface DashboardMetrics {
   totalNotifications: number;
 }
 
-export const useDashboardMetrics = (period: string, apartment?: any) => {
+export const useDashboardMetrics = (period: string, building?: any) => {
   const { user } = useAuth();
   const userTypeQuery = useUserType();
 
   return useQuery({
-    queryKey: ["dashboard-metrics", period, apartment],
+    queryKey: ["dashboard-metrics", period, building],
     queryFn: async () => {
       const today = startOfDay(new Date());
       const userType = userTypeQuery.data;
@@ -32,33 +32,16 @@ export const useDashboardMetrics = (period: string, apartment?: any) => {
           `*,apartment:apartments!inner(
           id,
           user_id,
-          building:buildings!inner(*)
+          building:buildings!inner(*, manager:managers!inner(apartment_complex_id))
         )`
         )
         .gte("created_at", start.toISOString())
-        .lt("created_at", end.toISOString());
-
-      if (userType?.type === "manager") {
-        const { data: doormen, error: doormenError } = await supabase
-          .from("doormen")
-          .select("user_id")
-          .eq("manager_id", userType.managerId);
-
-        if (doormenError) {
-          console.error("Error fetching doormen:", doormenError);
-          return null;
-        }
-
-        const doormenIds = doormen.map((d) => d.user_id);
-        doormenIds.push(userType.relatedId);
-
-        query = query.in("apartment.building.user_id", doormenIds);
-      } else {
-        query = query.in("apartment.building.user_id", [
-          userType?.relatedId,
-          userType?.doormanUserId,
-        ]);
+        .lt("created_at", end.toISOString())
+        .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id);
+      if (building) {
+        query = query.eq("apartment.building.id", building);
       }
+     
 
       const { data: packages, error } = await query;
 

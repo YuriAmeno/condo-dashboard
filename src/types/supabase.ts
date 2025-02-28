@@ -53,6 +53,24 @@ export interface Database {
           created_at?: string
         }
       }
+
+      apartment_complex: {
+        Row: {
+          id: string
+          name: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string
+        }
+      }
       apartments: {
         Row: {
           id: string
@@ -343,7 +361,7 @@ export interface Database {
           name: string
           email: string
           phone: string
-          building_name: string
+          apartment_complex_id: string
           created_at: string
         }
         Insert: {
@@ -352,7 +370,7 @@ export interface Database {
           name: string
           email: string
           phone: string
-          building_name: string
+          apartment_complex_id: string
           created_at?: string
         }
         Update: {
@@ -361,7 +379,6 @@ export interface Database {
           name?: string
           email?: string
           phone?: string
-          building_name?: string
           created_at?: string
         }
       }

@@ -27,10 +27,10 @@ const getPendingTime = (receivedAt: string) => {
   return `${duration.minutes()} minuto(s)`;
 };
 
-export function useAlerts(period: string, apartment?: any) {
+export function useAlerts(period: string, building?: any) {
   const userTypeQuery = useUserType();
   return useQuery({
-    queryKey: ["alerts", period, apartment],
+    queryKey: ["alerts", period, building],
     queryFn: async () => {
       const alerts: Alert[] = [];
       const userType = userTypeQuery.data;
@@ -42,34 +42,17 @@ export function useAlerts(period: string, apartment?: any) {
         .select(
           `
           *,
-          apartment:apartments!inner(*,building:buildings!inner(*)),
+          apartment:apartments!inner(*,building:buildings!inner(*, manager:managers!inner(apartment_complex_id))),
            resident:residents(*)
         `
         )
         .eq("status", "pending")
         .gte("received_at", start.toISOString())
-        .lt("received_at", end.toISOString());
+        .lt("received_at", end.toISOString())
+        .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id);
 
-      if (userType?.type === "manager") {
-        const { data: doormen, error: doormenError } = await supabase
-          .from("doormen")
-          .select("user_id")
-          .eq("manager_id", userType.managerId);
-
-        if (doormenError) {
-          console.error("Error fetching doormen:", doormenError);
-          return null;
-        }
-
-        const doormenIds = doormen.map((d) => d.user_id);
-        doormenIds.push(userType.relatedId);
-
-        query = query.in("apartment.building.user_id", doormenIds);
-      } else {
-        query = query.in("apartment.building.user_id", [
-          userType?.relatedId,
-          userType?.doormanUserId,
-        ]);
+      if (building) {
+        query = query.eq("apartment.building.id", building);
       }
 
       const { data: pendingPackages, error: pendingError } = await query;
