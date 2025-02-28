@@ -72,11 +72,14 @@ export function useRecentPackagesList(limit = 10) {
         *,
         apartment:apartments!inner(
           *,
-          building:buildings(*)
+          building:buildings!inner(
+            *,
+            manager:managers!inner(apartment_complex_id)
+          )
         )
         `,
         )
-        .eq('apartment.user_id', userType?.relatedId)
+         .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id)
         .order('created_at', { ascending: false })
         .limit(limit)
 

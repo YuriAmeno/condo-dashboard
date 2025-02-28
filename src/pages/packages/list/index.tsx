@@ -49,7 +49,8 @@ export function PackageList() {
     const matchesSearch =
       pkg.apartment.building.name.toLowerCase().includes(search.toLowerCase()) ||
       pkg.delivery_company.toLowerCase().includes(search.toLowerCase()) ||
-      pkg.store_name.toLowerCase().includes(search.toLowerCase())
+      pkg.store_name.toLowerCase().includes(search.toLowerCase()) ||
+      pkg?.resident_id?.toLowerCase().includes(search.toLowerCase())
 
     const matchesBuilding = buildingFilter === 'all' || pkg.apartment.building.id === buildingFilter
     const matchesStatus = statusFilter === 'all' || pkg.status === statusFilter

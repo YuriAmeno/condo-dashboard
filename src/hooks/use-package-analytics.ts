@@ -3,37 +3,35 @@ import { supabase } from "@/lib/supabase";
 import { subDays, format } from "date-fns";
 import { useUserType } from "./queryUser";
 import { getDaysPeriod } from "@/helpers/filterDashboard";
+import {
+  DailyStats,
+  BuildingStats,
+  HourlyStats,
+  StatusStats,
+  DeliveryHeatmapItem,
+  PackageAnalytics
+} from "@/pages/packages/core/_models";
 
-interface DailyStats {
-  date: string;
-  received: number;
-  delivered: number;
-}
-
-interface BuildingStats {
-  building: string;
-  pending: number;
-  delivered: number;
-  total: number;
-}
-
-interface HourlyStats {
-  hour: number;
-  received: number;
-  delivered: number;
-}
-
-interface StatusStats {
+// Interface simplificada para Package
+interface Package {
+  id: string;
+  created_at: string;
+  received_at?: string;
+  delivered_at?: string;
+  notified_at?: string;
   status: string;
-  count: number;
-  percentage: number;
-}
-
-interface PackageAnalytics {
-  dailyStats: DailyStats[];
-  buildingStats: BuildingStats[];
-  hourlyStats: HourlyStats[];
-  statusStats: StatusStats[];
+  size?: string;
+  carrier?: string;
+  apartment?: {
+    id: string;
+    building?: {
+      id: string;
+      name: string;
+      manager?: {
+        apartment_complex_id: string;
+      }
+    }
+  }
 }
 
 export function usePackageAnalytics(period: string, building?: any) {
@@ -70,6 +68,9 @@ export function usePackageAnalytics(period: string, building?: any) {
       const { data: packages, error } = await query;
       if (error) throw error;
 
+      // Garantir que packages é tratado como um array seguro
+      const safePackages: Package[] = packages || [];
+
       // Determina o tamanho do array de estatísticas diárias
       let lengthArray = 2;
       if (period === "week") lengthArray = 7;
@@ -80,8 +81,8 @@ export function usePackageAnalytics(period: string, building?: any) {
         { length: lengthArray },
         (_, i) => {
           const date = format(subDays(end, i), "yyyy-MM-dd");
-          const dayPackages = packages.filter((p) =>
-            p.created_at.startsWith(date)
+          const dayPackages = safePackages.filter((p) =>
+            p.created_at?.startsWith(date)
           );
           return {
             date,
@@ -94,11 +95,12 @@ export function usePackageAnalytics(period: string, building?: any) {
 
       // Building stats
       const buildingMap = new Map<string, BuildingStats>();
-      packages.forEach((p) => {
+      safePackages.forEach((p) => {
         const buildingName = p.apartment?.building?.name || "Desconhecido";
         if (!buildingMap.has(buildingName)) {
           buildingMap.set(buildingName, {
             building: buildingName,
+            name: buildingName,
             pending: 0,
             delivered: 0,
             total: 0,
@@ -118,10 +120,10 @@ export function usePackageAnalytics(period: string, building?: any) {
       const hourlyStats: HourlyStats[] = Array.from({ length: 24 }).map(
         (_, hour) => ({
           hour,
-          received: packages.filter(
-            (p) => new Date(p.received_at).getHours() === hour
+          received: safePackages.filter(
+            (p) => p.received_at && new Date(p.received_at).getHours() === hour
           ).length,
-          delivered: packages.filter(
+          delivered: safePackages.filter(
             (p) =>
               p.delivered_at && new Date(p.delivered_at).getHours() === hour
           ).length,
@@ -129,16 +131,16 @@ export function usePackageAnalytics(period: string, building?: any) {
       );
 
       // Status stats
-      const total = packages.length;
+      const total = safePackages.length;
       const statusStats: StatusStats[] = [
         {
           status: "Pendente",
-          count: packages.filter((p) => p.status === "pending").length,
+          count: safePackages.filter((p) => p.status === "pending").length,
           percentage: 0,
         },
         {
           status: "Entregue",
-          count: packages.filter((p) => p.status === "delivered").length,
+          count: safePackages.filter((p) => p.status === "delivered").length,
           percentage: 0,
         },
       ];
@@ -146,11 +148,39 @@ export function usePackageAnalytics(period: string, building?: any) {
         stat.percentage = total ? (stat.count / total) * 100 : 0;
       });
 
+      // Delivery Heatmap (para o heatmap de distribuição por período)
+      const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      const hours = ['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'];
+      
+      const deliveryHeatmap: DeliveryHeatmapItem[] = [];
+      
+      hours.forEach(hour => {
+        days.forEach(day => {
+          // Simula dados ou você pode processar pacotes reais por dia/hora
+          const hourNum = parseInt(hour.replace('h', ''));
+          const dayIndex = days.indexOf(day);
+          
+          // Contagem de pacotes para esta combinação de dia/hora
+          const dayPackages = safePackages.filter(p => {
+            if (!p.created_at) return false;
+            const date = new Date(p.created_at);
+            return date.getDay() === dayIndex && date.getHours() === hourNum;
+          });
+          
+          deliveryHeatmap.push({
+            hour,
+            day,
+            count: dayPackages.length
+          });
+        });
+      });
+
       return {
         dailyStats,
         buildingStats,
         hourlyStats,
         statusStats,
+        deliveryHeatmap
       } as PackageAnalytics;
     },
     refetchInterval: 5 * 60 * 1000, // 5 minutos

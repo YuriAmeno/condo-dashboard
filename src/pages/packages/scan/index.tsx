@@ -44,9 +44,12 @@ import { useToast } from '@/hooks/use-toast'
 import { packageConfirm } from '../core/_requests'
 import { useTheme } from '@/components/theme-provider'
 import SignaturePad from 'react-signature-pad-wrapper'
+import { createSignature } from '@/API/signature'
+import { useAuth } from '@/lib/auth'
 
 export function PackageScan() {
   const [qrCode, setQrCode] = useState<string | null>(null)
+  const { user } = useAuth()
   const [manualCode, setManualCode] = useState('')
   const [showDeliveryDialog, setShowDeliveryDialog] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
@@ -105,9 +108,17 @@ export function PackageScan() {
     if (!package_) return
 
     try {
+      const signatureData = {
+        apartment_complex_id: String(user?.apartment_complex_id),
+        signature_url: String(signature),
+      }
+
+      const signaturResp = await createSignature(signatureData)
+
       await deliveryMutation.mutateAsync({
         packageId: package_.id,
         notes: deliveryNotes,
+        signatureId: signaturResp.id,
       })
 
       const dataSendWebHook = {
@@ -126,11 +137,11 @@ export function PackageScan() {
       setShowDeliveryDialog(false)
       setDeliveryNotes('')
       setQrCode(null)
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Erro ao registrar entrega',
-        description: 'Tente novamente em alguns instantes.',
+        description: error.message,
       })
     }
   }

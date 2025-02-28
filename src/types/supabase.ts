@@ -144,6 +144,7 @@ export interface Database {
           received_at: string
           delivered_at: string | null
           status: 'pending' | 'delivered'
+          signature_id: string | null
           created_at: string
         }
         Insert: {
