@@ -43,6 +43,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
+import { useTheme } from '@/components/theme-provider'
 
 export function Dashboard() {
   const navigate = useNavigate()
@@ -61,6 +62,14 @@ export function Dashboard() {
   )
   const { data: alerts, refetch: refetchAlerts } = useAlerts(period, selectedBuilding)
   const { data: buildings, refetch: refetchBuildings } = useBuildings(period, selectedBuilding)
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
+  // Classes de texto para o tema dark
+  const textClass = isDark ? 'text-white' : 'text-gray-800'
+  const mutedTextClass = isDark ? 'text-gray-300' : 'text-gray-500'
+  const headingClass = isDark ? 'text-white' : 'text-gray-900'
+  const descriptionClass = isDark ? 'text-gray-300' : 'text-gray-500'
 
   useEffect(() => {
     refetchMetrics()
@@ -106,7 +115,7 @@ export function Dashboard() {
   // }
   // handleLogout()
   return (
-    <div className="space-y-6 p-4">
+    <div className={`p-4 space-y-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
       {/* Header com título e filtros */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center space-x-2">
@@ -154,7 +163,7 @@ export function Dashboard() {
             {/* Pacotes Pendentes */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Pacotes Pendentes</CardTitle>
+                <CardTitle className={headingClass}>Pacotes Pendentes</CardTitle>
                 <Icons.Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -168,7 +177,7 @@ export function Dashboard() {
             {/* Ocupação do Armazenamento */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Ocupação do Armazenamento</CardTitle>
+                <CardTitle className={headingClass}>Ocupação do Armazenamento</CardTitle>
                 <Icons.Archive className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -180,7 +189,7 @@ export function Dashboard() {
             {/* Pacotes Atrasados */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Pacotes Atrasados</CardTitle>
+                <CardTitle className={headingClass}>Pacotes Atrasados</CardTitle>
                 <Icons.AlertTriangle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -194,7 +203,7 @@ export function Dashboard() {
             {/* Tempo Médio de Retirada */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Tempo Médio de Retirada</CardTitle>
+                <CardTitle className={headingClass}>Tempo Médio de Retirada</CardTitle>
                 <Icons.Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -260,54 +269,34 @@ export function Dashboard() {
 
         {/* Analytics */}
         <TabsContent value="analytics">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Distribuição de Pacotes */}
-            <Card>
+            <Card className={`w-full ${isDark ? 'bg-gray-800 border-gray-700' : ''}`}>
               <CardHeader>
-                <CardTitle>Distribuição de Pacotes</CardTitle>
+                <CardTitle className={headingClass}>Distribuição de Pacotes</CardTitle>
               </CardHeader>
               <CardContent>
                 {analytics && analytics.statusStats?.length > 0 ? (
-                  <div className="space-y-8">
-                    <div className="flex items-center">
-                      <div className="w-full space-y-4">
-                        {analytics.statusStats.map((stat) => (
-                          <div key={stat.status} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <div
-                                  className="w-3 h-3 rounded-full"
-                                  style={{
-                                    backgroundColor:
-                                      stat.status === 'Pendente' ? '#FF8042' : '#00C49F',
-                                  }}
-                                />
-                                <span className="text-sm font-medium">{stat.status}</span>
-                              </div>
-                              <span className="text-sm text-muted-foreground">
-                                {stat.count} ({stat.percentage.toFixed(1)}%)
-                              </span>
-                            </div>
-                            <Progress value={stat.percentage} className="h-2" />
+                  <div className="space-y-2">
+                    {analytics.statusStats.map((stat) => (
+                      <div key={stat.status} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{
+                                backgroundColor: stat.status === 'Pendente' ? '#FF8042' : '#00C49F',
+                              }}
+                            />
+                            <span className={textClass}>{stat.status}</span>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex justify-center items-center pt-6 space-x-4">
-                      {analytics.statusStats.map((stat) => (
-                        <div key={stat.status} className="flex items-center space-x-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{
-                              backgroundColor: stat.status === 'Pendente' ? '#FF8042' : '#00C49F',
-                            }}
-                          />
-                          <span className="text-sm font-medium">
-                            {stat.status}: {stat.count}
+                          <span className={textClass}>
+                            {stat.count} ({stat.percentage.toFixed(1)}%)
                           </span>
                         </div>
-                      ))}
-                    </div>
+                        <Progress value={stat.percentage} className="h-2" />
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <p className="text-center text-gray-500">Nenhum dado disponível</p>
@@ -316,20 +305,18 @@ export function Dashboard() {
             </Card>
 
             {/* Volume de Pacotes por Edifício */}
-            <Card>
+            <Card className={`w-full ${isDark ? 'bg-gray-800 border-gray-700' : ''}`}>
               <CardHeader>
-                <CardTitle>Volume de Pacotes por Edifício</CardTitle>
+                <CardTitle className={headingClass}>Volume de Pacotes por Edifício</CardTitle>
               </CardHeader>
               <CardContent>
                 {analytics && analytics.buildingStats?.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     {analytics.buildingStats.map((building) => (
                       <div key={building.name} className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">{building.name}</span>
-                          <span className="text-sm text-muted-foreground">
-                            {building.total} pacotes
-                          </span>
+                          <span className={textClass}>{building.name}</span>
+                          <span className={textClass}>{building.total} pacotes</span>
                         </div>
                         <div className="flex h-2 items-center space-x-1 rounded-full bg-secondary">
                           <div
@@ -346,8 +333,8 @@ export function Dashboard() {
                           />
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Pendentes: {building.pending}</span>
-                          <span>Entregues: {building.delivered}</span>
+                          <span className={mutedTextClass}>Pendentes: {building.pending}</span>
+                          <span className={mutedTextClass}>Entregues: {building.delivered}</span>
                         </div>
                       </div>
                     ))}
@@ -357,127 +344,125 @@ export function Dashboard() {
                 )}
               </CardContent>
             </Card>
+          </div>
 
-            {/* Distribuição de Entregas por Período */}
-            <Card className="card-full-width">
-              <CardHeader>
-                <CardTitle className="text-subheading">
-                  Distribuição de Entregas por Período
-                </CardTitle>
-                <CardDescription>Visualização de horários e dias com maior volume</CardDescription>
-              </CardHeader>
-              <CardContent className="px-1 sm:px-6">
-                {analytics && analytics.deliveryHeatmap?.length > 0 ? (
-                  <div className="table-responsive">
-                    {/* Visão para Mobile - Simplificada para telas muito pequenas */}
-                    <div className="block sm:hidden">
-                      <div className="space-y-4">
-                        <p className="text-center text-sm text-muted-foreground mb-2">
-                          Deslize para ver todos os dias da semana
-                        </p>
-                        <div className="overflow-x-auto pb-4">
-                          <Table className="w-[600px]">
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="w-16 text-center font-medium">Hora</TableHead>
-                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-                                  <TableHead key={day} className="text-center font-medium w-14">
-                                    {day}
-                                  </TableHead>
-                                ))}
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'].map(
-                                (hour) => (
-                                  <TableRow key={hour}>
-                                    <TableCell className="text-center font-medium text-xs">
-                                      {hour}
-                                    </TableCell>
-                                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(
-                                      (day) => {
-                                        const cell = analytics.deliveryHeatmap.find(
-                                          (item) => item.hour === hour && item.day === day,
-                                        )
-                                        const count = cell?.count || 0
-                                        const intensity = Math.min(1, count / 10)
-                                        const bgColor = `rgba(24, 144, 255, ${intensity})`
+          {/* Distribuição de Entregas por Período */}
+          <Card className={`w-full ${isDark ? 'bg-gray-800 border-gray-700 mt-5' : ''}`}>
+            <CardHeader>
+              <CardTitle className={headingClass}>Distribuição de Entregas por Período</CardTitle>
+              <CardDescription className={descriptionClass}>
+                Visualização de horários e dias com maior volume
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              {analytics && analytics.deliveryHeatmap?.length > 0 ? (
+                <div className="table-responsive">
+                  {/* Visão para Mobile - Simplificada para telas muito pequenas */}
+                  <div className="block sm:hidden">
+                    <div className="space-y-4">
+                      <p className="text-center text-sm text-muted-foreground mb-2">
+                        Deslize para ver todos os dias da semana
+                      </p>
+                      <div className="overflow-x-auto pb-4">
+                        <Table className="w-[600px]">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-16 text-center font-medium">Hora</TableHead>
+                              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                                <TableHead key={day} className="text-center font-medium w-14">
+                                  {day}
+                                </TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'].map(
+                              (hour) => (
+                                <TableRow key={hour}>
+                                  <TableCell className="text-center font-medium text-xs">
+                                    {hour}
+                                  </TableCell>
+                                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => {
+                                    const cell = analytics.deliveryHeatmap.find(
+                                      (item) => item.hour === hour && item.day === day,
+                                    )
+                                    const count = cell?.count || 0
+                                    const intensity = Math.min(1, count / 10)
+                                    const bgColor = `rgba(24, 144, 255, ${intensity})`
 
-                                        return (
-                                          <TableCell
-                                            key={`${hour}-${day}`}
-                                            style={{
-                                              backgroundColor: bgColor,
-                                              color: intensity > 0.5 ? 'white' : 'black',
-                                            }}
-                                            className="text-center font-medium p-1 text-xs w-14 h-10"
-                                          >
-                                            {count}
-                                          </TableCell>
-                                        )
-                                      },
-                                    )}
-                                  </TableRow>
-                                ),
-                              )}
-                            </TableBody>
-                          </Table>
-                        </div>
+                                    return (
+                                      <TableCell
+                                        key={`${hour}-${day}`}
+                                        style={{
+                                          backgroundColor: bgColor,
+                                          color: isDark ? 'white' : 'black',
+                                        }}
+                                        className="text-center font-medium p-1 text-xs w-14 h-10 dark:text-white"
+                                      >
+                                        {count}
+                                      </TableCell>
+                                    )
+                                  })}
+                                </TableRow>
+                              ),
+                            )}
+                          </TableBody>
+                        </Table>
                       </div>
                     </div>
-
-                    {/* Visão para Tablets e Desktop */}
-                    <div className="hidden sm:block">
-                      <Table className="w-full table-fixed">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-20 text-center">Horário/Dia</TableHead>
-                            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-                              <TableHead key={day} className="w-[calc((100%-80px)/7)] text-center">
-                                {day}
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'].map(
-                            (hour) => (
-                              <TableRow key={hour}>
-                                <TableCell className="text-center font-medium">{hour}</TableCell>
-                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => {
-                                  const cell = analytics.deliveryHeatmap.find(
-                                    (item) => item.hour === hour && item.day === day,
-                                  )
-                                  const count = cell?.count || 0
-                                  const intensity = Math.min(1, count / 10)
-                                  const bgColor = `rgba(24, 144, 255, ${intensity})`
-
-                                  return (
-                                    <TableCell
-                                      key={`${hour}-${day}`}
-                                      style={{
-                                        backgroundColor: bgColor,
-                                        color: intensity > 0.5 ? 'white' : 'black',
-                                      }}
-                                      className="text-center font-medium p-2 sm:p-3 text-sm"
-                                    >
-                                      {count}
-                                    </TableCell>
-                                  )
-                                })}
-                              </TableRow>
-                            ),
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
                   </div>
-                ) : (
-                  <p className="text-center text-gray-500">Nenhum dado disponível</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+
+                  {/* Visão para Tablets e Desktop */}
+                  <div className="hidden sm:block">
+                    <Table className="w-full table-fixed">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-20 text-center">Horário/Dia</TableHead>
+                          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                            <TableHead key={day} className="w-[calc((100%-80px)/7)] text-center">
+                              {day}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'].map(
+                          (hour) => (
+                            <TableRow key={hour}>
+                              <TableCell className="text-center font-medium">{hour}</TableCell>
+                              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => {
+                                const cell = analytics.deliveryHeatmap.find(
+                                  (item) => item.hour === hour && item.day === day,
+                                )
+                                const count = cell?.count || 0
+                                const intensity = Math.min(1, count / 10)
+                                const bgColor = `rgba(24, 144, 255, ${intensity})`
+
+                                return (
+                                  <TableCell
+                                    key={`${hour}-${day}`}
+                                    style={{
+                                      backgroundColor: bgColor,
+                                      color: theme === 'dark' ? 'white' : 'black',
+                                    }}
+                                    className="text-center font-medium p-2 sm:p-3 text-sm dark:text-white"
+                                  >
+                                    {count}
+                                  </TableCell>
+                                )
+                              })}
+                            </TableRow>
+                          ),
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center text-gray-500">Nenhum dado disponível</p>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Alerts */}
