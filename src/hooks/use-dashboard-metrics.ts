@@ -6,6 +6,7 @@ import { useUserType } from "./queryUser";
 import { getDaysPeriod } from "@/helpers/filterDashboard";
 
 interface DashboardMetrics {
+  totalPackages: number;
   pendingPackages: number;
   deliveredToday: number;
   delayedPackages: number;
@@ -87,6 +88,7 @@ export const useDashboardMetrics = (period: string, building?: any) => {
         (pendingPackages.length / storageCapacity) * 100;
 
       const metrics: DashboardMetrics = {
+        totalPackages: packages.length,
         pendingPackages: pendingPackages.length,
         deliveredToday: deliveredToday.length,
         delayedPackages: delayedPackages.length,

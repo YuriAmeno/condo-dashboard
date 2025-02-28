@@ -135,7 +135,7 @@ export function Buildings() {
                 Nova Torre
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="w-[calc(100%-24px)] max-w-[350px] p-3 xs:p-4 sm:p-5">
               <DialogHeader>
                 <DialogTitle>Nova Torre</DialogTitle>
                 <DialogDescription>Adicione uma nova torre ao condomínio.</DialogDescription>
@@ -191,7 +191,7 @@ export function Buildings() {
                               Editar Torre
                             </DropdownMenuItem>
                           </DialogTrigger>
-                          <DialogContent>
+                          <DialogContent className="w-[calc(100%-24px)] max-w-[350px] p-3 xs:p-4 sm:p-5">
                             <DialogHeader>
                               <DialogTitle>Editar Torre</DialogTitle>
                               <DialogDescription>Altere as informações da torre.</DialogDescription>
@@ -210,7 +210,7 @@ export function Buildings() {
                               Deletar Torre
                             </DropdownMenuItem>
                           </DialogTrigger>
-                          <DialogContent>
+                          <DialogContent className="w-[calc(100%-24px)] max-w-[350px] p-3 xs:p-4 sm:p-5">
                             <DialogHeader>
                               <DialogTitle>Deletar Torre</DialogTitle>
                               <DialogDescription>
@@ -219,7 +219,7 @@ export function Buildings() {
                             </DialogHeader>
                             <Button
                               type="button"
-                              className="w-full"
+                              className="w-full min-h-touch-target rounded-mobile mt-2"
                               onClick={() => handleDeleteBuilding(building.id)}
                             >
                               Deletar Torre
@@ -235,14 +235,16 @@ export function Buildings() {
                           Gerenciar Apartamentos
                         </DropdownMenuItem>
                       </DialogTrigger>
-                      <DialogContentBuilding>
+                      <DialogContentBuilding className="w-[calc(100%-24px)] sm:max-w-[550px] md:max-w-[650px] p-3 xs:p-4 sm:p-6">
                         <DialogHeader>
-                          <DialogTitle>Apartamentos - {building.name}</DialogTitle>
-                          <DialogDescription>
+                          <DialogTitle className="text-base xs:text-lg">
+                            Apartamentos - {building.name}
+                          </DialogTitle>
+                          <DialogDescription className="text-xs xs:text-sm">
                             Gerencie os apartamentos desta torre.
                           </DialogDescription>
                         </DialogHeader>
-                        <div className="mt-6">
+                        <div className="mt-3 xs:mt-4">
                           <ApartmentList buildingId={building.id} />
                         </div>
                       </DialogContentBuilding>

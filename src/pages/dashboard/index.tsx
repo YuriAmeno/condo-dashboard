@@ -359,57 +359,118 @@ export function Dashboard() {
             </Card>
 
             {/* Distribuição de Entregas por Período */}
-            <Card className="md:col-span-2">
+            <Card className="card-full-width">
               <CardHeader>
-                <CardTitle>Distribuição de Entregas por Período</CardTitle>
+                <CardTitle className="text-subheading">
+                  Distribuição de Entregas por Período
+                </CardTitle>
                 <CardDescription>Visualização de horários e dias com maior volume</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-1 sm:px-6">
                 {analytics && analytics.deliveryHeatmap?.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <Table className="w-full table-fixed">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-20 text-center">Horário/Dia</TableHead>
-                          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-                            <TableHead key={day} className="w-[calc((100%-80px)/7)] text-center">
-                              {day}
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'].map(
-                          (hour) => (
-                            <TableRow key={hour}>
-                              <TableCell className="text-center font-medium">{hour}</TableCell>
-                              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => {
-                                const cell = analytics.deliveryHeatmap.find(
-                                  (item) => item.hour === hour && item.day === day,
-                                )
-                                const count = cell?.count || 0
-                                // Calcula intensidade de cor baseada na contagem
-                                const intensity = Math.min(1, count / 10) // Normaliza para máximo de 10 pacotes
-                                const bgColor = `rgba(24, 144, 255, ${intensity})`
+                  <div className="table-responsive">
+                    {/* Visão para Mobile - Simplificada para telas muito pequenas */}
+                    <div className="block sm:hidden">
+                      <div className="space-y-4">
+                        <p className="text-center text-sm text-muted-foreground mb-2">
+                          Deslize para ver todos os dias da semana
+                        </p>
+                        <div className="overflow-x-auto pb-4">
+                          <Table className="w-[600px]">
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-16 text-center font-medium">Hora</TableHead>
+                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                                  <TableHead key={day} className="text-center font-medium w-14">
+                                    {day}
+                                  </TableHead>
+                                ))}
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'].map(
+                                (hour) => (
+                                  <TableRow key={hour}>
+                                    <TableCell className="text-center font-medium text-xs">
+                                      {hour}
+                                    </TableCell>
+                                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(
+                                      (day) => {
+                                        const cell = analytics.deliveryHeatmap.find(
+                                          (item) => item.hour === hour && item.day === day,
+                                        )
+                                        const count = cell?.count || 0
+                                        const intensity = Math.min(1, count / 10)
+                                        const bgColor = `rgba(24, 144, 255, ${intensity})`
 
-                                return (
-                                  <TableCell
-                                    key={`${hour}-${day}`}
-                                    style={{
-                                      backgroundColor: bgColor,
-                                      color: intensity > 0.5 ? 'white' : 'black',
-                                    }}
-                                    className="text-center font-medium p-2"
-                                  >
-                                    {count}
-                                  </TableCell>
-                                )
-                              })}
-                            </TableRow>
-                          ),
-                        )}
-                      </TableBody>
-                    </Table>
+                                        return (
+                                          <TableCell
+                                            key={`${hour}-${day}`}
+                                            style={{
+                                              backgroundColor: bgColor,
+                                              color: intensity > 0.5 ? 'white' : 'black',
+                                            }}
+                                            className="text-center font-medium p-1 text-xs w-14 h-10"
+                                          >
+                                            {count}
+                                          </TableCell>
+                                        )
+                                      },
+                                    )}
+                                  </TableRow>
+                                ),
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Visão para Tablets e Desktop */}
+                    <div className="hidden sm:block">
+                      <Table className="w-full table-fixed">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-20 text-center">Horário/Dia</TableHead>
+                            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                              <TableHead key={day} className="w-[calc((100%-80px)/7)] text-center">
+                                {day}
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'].map(
+                            (hour) => (
+                              <TableRow key={hour}>
+                                <TableCell className="text-center font-medium">{hour}</TableCell>
+                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => {
+                                  const cell = analytics.deliveryHeatmap.find(
+                                    (item) => item.hour === hour && item.day === day,
+                                  )
+                                  const count = cell?.count || 0
+                                  const intensity = Math.min(1, count / 10)
+                                  const bgColor = `rgba(24, 144, 255, ${intensity})`
+
+                                  return (
+                                    <TableCell
+                                      key={`${hour}-${day}`}
+                                      style={{
+                                        backgroundColor: bgColor,
+                                        color: intensity > 0.5 ? 'white' : 'black',
+                                      }}
+                                      className="text-center font-medium p-2 sm:p-3 text-sm"
+                                    >
+                                      {count}
+                                    </TableCell>
+                                  )
+                                })}
+                              </TableRow>
+                            ),
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 ) : (
                   <p className="text-center text-gray-500">Nenhum dado disponível</p>

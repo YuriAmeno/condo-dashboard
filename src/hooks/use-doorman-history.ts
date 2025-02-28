@@ -13,7 +13,7 @@ export function useDoormanHistory(doormanId: string | null) {
       const { data, error } = await supabase
         .from('doormen_history')
         .select('*')
-        .eq('doorman_id', doormanId)
+        .eq('doormen_id', doormanId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

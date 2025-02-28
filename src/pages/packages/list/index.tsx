@@ -184,33 +184,91 @@ export function PackageList() {
                     </div>
                   </TableCell>
                   <TableCell>{pkg.doorman_name ? pkg.doorman_name : 'Síndico'}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden xs:table-cell">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="min-h-touch-target w-10 h-10 sm:w-auto sm:h-auto rounded-mobile flex items-center justify-center"
+                        >
                           <Users className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle className="text-center">Etiqueta da Encomenda</DialogTitle>
+                      <DialogContent className="w-[calc(100%-24px)] max-w-[350px] p-3 xs:p-4 sm:p-5">
+                        <DialogHeader className="pb-0 space-y-1">
+                          <DialogTitle className="text-center text-base">
+                            Etiqueta da Encomenda
+                          </DialogTitle>
                         </DialogHeader>
                         <div className="flex justify-center">
-                          <div ref={labelRef}>
+                          <div ref={labelRef} className="w-full">
                             <PackageLabelList data={pkg} />
                           </div>
                         </div>
-                        <DialogFooter>
+                        <DialogFooter className="mt-2 sm:mt-4 flex flex-col xs:flex-row gap-2">
                           <DialogClose asChild>
-                            <Button variant="outline">Fechar</Button>
+                            <Button
+                              variant="outline"
+                              className="w-full min-h-touch-target rounded-mobile text-sm"
+                            >
+                              Fechar
+                            </Button>
                           </DialogClose>
-                          <Button onClick={handlePrint}>
+                          <Button
+                            onClick={handlePrint}
+                            className="w-full min-h-touch-target rounded-mobile text-sm"
+                          >
                             <Printer className="mr-2 h-4 w-4" />
-                            Imprimir Etiqueta
+                            Imprimir
                           </Button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
+                  </TableCell>
+                  <TableCell className="xs:hidden">
+                    <div className="flex items-center justify-end space-x-1">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="min-h-touch-target w-10 h-10 rounded-mobile p-0 flex items-center justify-center"
+                          >
+                            <Users className="h-5 w-5" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="w-[calc(100%-24px)] max-w-[350px] p-3">
+                          <DialogHeader className="pb-0 space-y-1">
+                            <DialogTitle className="text-center text-base">
+                              Etiqueta da Encomenda
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="flex justify-center">
+                            <div ref={labelRef} className="w-full">
+                              <PackageLabelList data={pkg} />
+                            </div>
+                          </div>
+                          <DialogFooter className="mt-2 flex flex-col gap-2">
+                            <DialogClose asChild>
+                              <Button
+                                variant="outline"
+                                className="w-full min-h-touch-target rounded-mobile text-sm"
+                              >
+                                Fechar
+                              </Button>
+                            </DialogClose>
+                            <Button
+                              onClick={handlePrint}
+                              className="w-full min-h-touch-target rounded-mobile text-sm"
+                            >
+                              <Printer className="mr-2 h-4 w-4" />
+                              Imprimir
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

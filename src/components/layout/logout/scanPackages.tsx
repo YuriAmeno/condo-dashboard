@@ -72,34 +72,34 @@ export const ScanPackages = () => {
     onError: handleScanError,
   })
   return (
-    <div>
+    <div className="space-y-4">
       <div className="flex items-center space-x-2">
-        <QrCode className="h-6 w-6 text-primary" />
-        <h1 className="text-3xl font-bold tracking-tight">Scanner QR Code</h1>
+        <QrCode className="h-5 w-5 text-primary" />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Scanner QR Code</h1>
       </div>
 
-      <Alert className="mt-5">
+      <Alert className="text-sm">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Dica</AlertTitle>
-        <AlertDescription>
+        <AlertDescription className="text-xs sm:text-sm">
           Pressione Ctrl + Q para ligar/desligar o scanner de QR Code.
         </AlertDescription>
       </Alert>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="w-full">
         {/* Scanner Card */}
-        <Card className="mt-5">
-          <CardHeader>
-            <CardTitle>Scanner</CardTitle>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Scanner</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+          <CardContent className="space-y-3">
+            <div className="relative aspect-square w-full max-w-[280px] mx-auto bg-muted rounded-lg overflow-hidden">
               <div id="qr-reader" className="w-full h-full"></div>
               {!isScanning && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
                   <div className="text-center">
-                    <Camera className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <p className="mt-2 text-sm text-muted-foreground">Scanner desligado</p>
+                    <Camera className="mx-auto h-8 w-8 text-muted-foreground" />
+                    <p className="mt-2 text-xs text-muted-foreground">Scanner desligado</p>
                   </div>
                 </div>
               )}
@@ -107,7 +107,7 @@ export const ScanPackages = () => {
 
             <Button
               onClick={() => toggleScanner('qr-reader')}
-              className="w-full"
+              className="w-full min-h-touch-target rounded-mobile mt-2"
               variant={isScanning ? 'destructive' : 'default'}
             >
               {isScanning ? (
@@ -122,8 +122,6 @@ export const ScanPackages = () => {
                 </>
               )}
             </Button>
-
-            <Separator />
           </CardContent>
         </Card>
       </div>

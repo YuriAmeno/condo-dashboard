@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/hooks/use-toast'
 import { useUserType } from '@/hooks/queryUser'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Dialog, DialogDescription, DialogTitle } from '@radix-ui/react-dialog'
 import { DialogContentBuilding, DialogHeader } from '../ui/dialog'
-import { Card, CardContent, CardHeader } from '../ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { PackagePending } from './logout/packagesPending'
 import { ScanPackages } from './logout/scanPackages'
 import { useLayout } from './core/useLayout'
@@ -28,6 +28,9 @@ import {
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
 
+import { useTheme } from '../theme-provider'
+import SignaturePad from 'react-signature-pad-wrapper'
+import { createSignature } from '@/API/signature'
 interface HeaderProps {
   children?: React.ReactNode
 }
@@ -36,7 +39,8 @@ export function Header({ children }: HeaderProps) {
   const { user, signOut } = useAuth()
   const { toast } = useToast()
   const userLogged = useUserType()
-
+  const sigCanvas = useRef<any>(null)
+  const { theme } = useTheme()
   const {
     packVerified,
     packs,
@@ -69,22 +73,20 @@ export function Header({ children }: HeaderProps) {
   }
 
   useEffect(() => {
-    const idsPack = packs?.map((val: any) => val.id)
+    const areAllPackagesVerified = () => {
+      if (!packs?.length || !packVerified?.length) return false
+      if (packs.length !== packVerified.length) return false
 
-    const arraysEquals = (arr1: [], arr2: []) => {
-      if (arr1?.length !== arr2?.length) return false
-
-      const sorted1 = [...arr1].sort((a, b) => a - b)
-      const sorted2 = [...arr2].sort((a, b) => a - b)
-
-      return sorted1.every((valor, index) => valor === sorted2[index])
+      const verifiedSet = new Set(packVerified)
+      return packs.every((pack: any) => verifiedSet.has(pack.id))
     }
-    const allPacksVerfied = arraysEquals(idsPack, packVerified)
 
-    if (allPacksVerfied) {
+    if (areAllPackagesVerified()) {
       setDisable(false)
+    } else {
+      setDisable(true)
     }
-  }, [packVerified])
+  }, [packVerified, packs])
 
   const handleDoorman = useCallback(() => {
     setShowSelect(true)
@@ -110,8 +112,26 @@ export function Header({ children }: HeaderProps) {
   }, [])
 
   async function handleChangeTurn() {
-    const { error } = await signOut()
-    if (error) {
+    try {
+      const signatureData = {
+        apartment_complex_id: String(user?.apartment_complex_id),
+        signature_url: String(sigCanvas.current.toDataURL()),
+      }
+      const signatureResp = await createSignature(signatureData)
+
+      const { error } = await supabase.from('doormen_history').insert({
+        doormen_id: selectedDoormen,
+        outgoing_doormen_id: userLogged?.data?.doormenId,
+        signature_id: signatureResp.id,
+        reason: 'Troca de turno',
+      })
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      await signOut()
+    } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Erro ao sair',
@@ -154,55 +174,124 @@ export function Header({ children }: HeaderProps) {
           </DropdownMenu>
         </div>
         <Dialog open={openPackagePending} onOpenChange={setOpenPackage}>
-          <DialogContentBuilding>
+          <DialogContentBuilding className="w-[calc(100%-24px)] max-w-[650px] p-3 xs:p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
             <DialogHeader>
-              <DialogTitle>Confirmação de Entregas</DialogTitle>
-              <DialogDescription>Confirme as entregas antes de trocar o turno</DialogDescription>
+              <DialogTitle className="text-base xs:text-lg">Confirmação de Entregas</DialogTitle>
+              <DialogDescription className="text-xs xs:text-sm">
+                Confirme as entregas antes de trocar o turno
+              </DialogDescription>
             </DialogHeader>
-            <div className="mt-6">
+            <div className="mt-4 space-y-4">
               <Card>
-                <CardHeader>Pacotes Pendentes</CardHeader>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Pacotes Pendentes</CardTitle>
+                </CardHeader>
                 <CardContent>
                   <PackagePending userLogged={userLogged.data} />
                 </CardContent>
               </Card>
 
-              <Card className="mt-5" hidden={disableBtn == false ? true : false}>
-                <CardHeader>Escanear Pacotes</CardHeader>
+              <Card className="mt-4" hidden={disableBtn == false ? true : false}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Escanear Pacotes</CardTitle>
+                </CardHeader>
                 <CardContent>
                   <ScanPackages />
                 </CardContent>
               </Card>
+
               {!showSelect && (
-                <div className="mt-5 flex justify-center">
-                  <Button disabled={disableBtn} onClick={handleDoorman}>
+                <div className="mt-4 flex justify-center">
+                  <Button
+                    disabled={disableBtn}
+                    onClick={handleDoorman}
+                    className="min-h-touch-target rounded-mobile w-full sm:w-auto"
+                  >
                     Confirmar
                   </Button>
                 </div>
               )}
 
               {showSelect && (
-                <div className="mt-5 flex justify-center">
-                  <Select
-                    onValueChange={(value) => setSelectedDoormen(value)}
-                    value={selectedDoormen}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma torre" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {doormens?.map((doorman: any) => (
-                        <SelectItem key={doorman.id} value={doorman.id}>
-                          {doorman.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="mt-5 space-y-4">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="doorman-select"
+                      className="text-sm font-medium leading-none block mb-1.5"
+                    >
+                      Selecione o porteiro que está assumindo o turno
+                    </label>
+                    <Select
+                      onValueChange={(value) => setSelectedDoormen(value)}
+                      value={selectedDoormen}
+                    >
+                      <SelectTrigger className="w-full min-h-touch-target">
+                        <SelectValue placeholder="Selecione um porteiro" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {doormens?.map((doorman: any) => (
+                          <SelectItem key={doorman.id} value={doorman.id}>
+                            {doorman.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                  <Button onClick={handleChangeTurn}>
-                    <Icons.LogOut className="mr-2 h-4 w-4" />
-                    Trocar Turno
-                  </Button>
+                  <div className="space-y-2 border rounded-lg p-3 bg-card">
+                    <div className="flex items-center justify-between mb-1">
+                      <label htmlFor="signature-pad" className="text-sm font-medium leading-none">
+                        Assinatura do Porteiro
+                      </label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (sigCanvas.current) {
+                            sigCanvas.current.clear()
+                          }
+                        }}
+                        className="h-8 px-2 text-xs"
+                      >
+                        Limpar
+                      </Button>
+                    </div>
+
+                    <div className="bg-background border rounded-lg overflow-hidden">
+                      <SignaturePad
+                        ref={sigCanvas}
+                        options={{
+                          penColor: theme == 'light' ? 'black' : 'white',
+                          minWidth: 1,
+                          maxWidth: 3,
+                          backgroundColor:
+                            theme == 'light' ? 'rgba(255,255,255,0)' : 'rgba(0,0,0,0)',
+                        }}
+                        canvasProps={{
+                          id: 'signature-pad',
+                          className: 'w-full',
+                          style: {
+                            height: '180px',
+                            touchAction: 'none',
+                          },
+                        }}
+                      />
+                    </div>
+
+                    <p className="text-xs text-muted-foreground italic">
+                      Assine no espaço acima usando o dedo ou mouse
+                    </p>
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      onClick={handleChangeTurn}
+                      className="min-h-touch-target rounded-mobile w-full sm:w-auto"
+                    >
+                      <Icons.LogOut className="mr-2 h-4 w-4" />
+                      Trocar Turno
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
