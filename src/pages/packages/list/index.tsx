@@ -26,7 +26,6 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -34,13 +33,15 @@ import {
 import { DialogTrigger } from '@radix-ui/react-dialog'
 import { useReactToPrint } from 'react-to-print'
 import { PackageLabelList } from '@/components/packages/package-label-list'
+import { useResidents } from '@/hooks/use-residents'
 
 export function PackageList() {
   const [search, setSearch] = useState('')
   const [buildingFilter, setBuildingFilter] = useState<string | 'all'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'delivered'>('all')
-
+  const [selectedResident, setSelectedResident] = useState<string | 'all'>('all')
   const { data: buildings } = useBuildingsList()
+  const { residents } = useResidents()
   const { data: packages, isLoading } = useRecentPackagesList(100)
   const labelRef = useRef<HTMLDivElement>(null)
 
@@ -52,8 +53,8 @@ export function PackageList() {
 
     const matchesBuilding = buildingFilter === 'all' || pkg.apartment.building.id === buildingFilter
     const matchesStatus = statusFilter === 'all' || pkg.status === statusFilter
-
-    return matchesSearch && matchesBuilding && matchesStatus
+    const matchesResident = selectedResident === 'all' || pkg.resident_id === selectedResident
+    return matchesSearch && matchesBuilding && matchesStatus && matchesResident
   })
 
   const handlePrint = useReactToPrint({
@@ -107,6 +108,23 @@ export function PackageList() {
             <SelectItem value="all">Todos os status</SelectItem>
             <SelectItem value="pending">Pendentes</SelectItem>
             <SelectItem value="delivered">Entregues</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={selectedResident}
+          onValueChange={(value) => setSelectedResident(value as typeof selectedResident)}
+        >
+          <SelectTrigger className="w-full md:w-[180px]">
+            <SelectValue placeholder="Filtrar por morador" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os moradores</SelectItem>
+            {residents?.map((resident: any) => (
+              <SelectItem key={resident.id} value={resident.id}>
+                {resident.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
