@@ -27,6 +27,7 @@ export const useDashboardMetrics = (period: string, building?: any) => {
 
       const { start, end } = getDaysPeriod(period);
 
+      console.log(userType)
       let query = supabase
         .from("packages")
         .select(
@@ -100,6 +101,6 @@ export const useDashboardMetrics = (period: string, building?: any) => {
       return metrics;
     },
     refetchInterval: 5 * 60 * 1000, // 5 minutes
-    enabled: !!user && !userTypeQuery.isLoading,
+    enabled: !!user && !!userTypeQuery.isLoading,
   });
 };

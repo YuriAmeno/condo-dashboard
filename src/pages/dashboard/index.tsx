@@ -44,6 +44,7 @@ import {
 } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { useTheme } from '@/components/theme-provider'
+import { supabase } from '@/lib/supabase'
 
 export function Dashboard() {
   const navigate = useNavigate()

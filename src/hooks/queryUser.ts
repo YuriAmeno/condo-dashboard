@@ -16,6 +16,7 @@ export const useUserType = () => {
     } | null> => {
       if (!user) return null
 
+      console.log(user)
       // Consulta na tabela 'managers'
       const { data: manager, error: managerError } = await supabase
         .from('managers')
