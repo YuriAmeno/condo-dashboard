@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Package, Loader2 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabase, adminAuthClient } from '@/lib/supabase'
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth'
 import { Button } from '@/components/ui/button'
 import {
@@ -34,13 +34,14 @@ export function Register() {
       confirmPassword: '',
     },
   })
-
+  console.log('form', form.formState.errors)
   const onSubmit = async (data: RegisterFormData) => {
+    console.log('data', data)
     try {
       setIsCreating(true)
 
       // 1. Criar usuário no Supabase Auth com role 'manager'
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await adminAuthClient.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -48,7 +49,7 @@ export function Register() {
             role: 'manager',
             is_active: true,
           },
-          emailRedirectTo: `${window.location.origin}/auth/login`,
+          // emailRedirectTo: `${window.location.origin}/auth/login`,
         },
       })
 
@@ -78,6 +79,29 @@ export function Register() {
         return
       }
 
+      // 2. Verificar se o usuário está autenticado
+      const { data: session } = await supabase.auth.getSession()
+
+      if (!session.session) {
+        // Se não estiver autenticado, fazer login com as credenciais fornecidas
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        })
+
+        if (signInError) {
+          toast({
+            variant: 'destructive',
+            title: 'Erro na autenticação',
+            description: 'Não foi possível autenticar o usuário para completar o cadastro.',
+          })
+
+          // Limpar usuário criado em caso de erro
+          await supabase.auth.admin.deleteUser(authData.user.id)
+          return
+        }
+      }
+
       // 3. Criar complexo inicial
       const { data: complexData, error: complexError } = await supabase
         .from('apartment_complex')
@@ -88,37 +112,65 @@ export function Register() {
         .single()
 
       if (complexError) {
+        console.error('Detailed complex error:', complexError)
+
+        // Limpar usuário criado em caso de erro
+        await supabase.auth.admin.deleteUser(authData.user.id)
+
         toast({
           variant: 'destructive',
           title: 'Erro ao criar condomínio',
-          description: 'O cadastro foi realizado, mas não foi possível criar o condomínio inicial.',
+          description: 'Não foi possível criar o condomínio. Tente novamente.',
         })
+        return
       }
 
-      if (complexData) {
-        // 3. Criar registro do manager
-        const { error: managerError } = await supabase.from('managers').insert({
-          user_id: authData.user.id,
-          name: data.name,
-          email: data.email,
-          phone: formatPhoneForDB(data.phone),
-          apartment_complex_id: complexData?.id,
+      if (!complexData) {
+        // Limpar usuário criado em caso de erro
+        await supabase.auth.admin.deleteUser(authData.user.id)
+
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao criar condomínio',
+          description: 'Não foi possível criar o condomínio. Tente novamente.',
         })
-
-        if (managerError) {
-          // Limpar usuário criado em caso de erro
-          await supabase.auth.admin.deleteUser(authData.user.id)
-          await supabase.from('apartment_complex').delete().eq('id', complexData?.id)
-          toast({
-            variant: 'destructive',
-            title: 'Erro no cadastro',
-            description: 'Não foi possível completar o cadastro. Tente novamente.',
-          })
-          return
-        }
-
-        navigate('/auth/login')
+        return
       }
+
+      // 4. Criar registro do manager
+      const { error: managerError } = await supabase.from('managers').insert({
+        user_id: authData.user.id,
+        name: data.name,
+        email: data.email,
+        phone: formatPhoneForDB(data.phone),
+        apartment_complex_id: complexData.id,
+      })
+
+      if (managerError) {
+        console.error('Detailed manager error:', managerError)
+
+        // Limpar usuário e complexo criados em caso de erro
+        await supabase.auth.admin.deleteUser(authData.user.id)
+        await supabase.from('apartment_complex').delete().eq('id', complexData.id)
+
+        toast({
+          variant: 'destructive',
+          title: 'Erro no cadastro',
+          description: 'Não foi possível completar o cadastro do gerente. Tente novamente.',
+        })
+        return
+      }
+
+      // 5. Fazer logout para garantir que o usuário vá para a tela de login
+      await adminAuthClient.auth.signOut()
+
+      // Cadastro completo com sucesso
+      toast({
+        title: 'Cadastro realizado com sucesso!',
+        description: 'Você já pode fazer login no sistema.',
+      })
+
+      navigate('/auth/login')
     } catch (error) {
       console.error('Error creating manager:', error)
       toast({

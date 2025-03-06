@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Package, Search, Building2, User, Clock, Loader2, Users, Printer } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -177,7 +177,7 @@ export function PackageList() {
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <span>
-                        {format(new Date(pkg.received_at), "dd/MM/yyyy 'às' HH:mm", {
+                        {format(new Date(String(pkg.received_at)), "dd/MM/yyyy 'às' HH:mm", {
                           locale: ptBR,
                         })}
                       </span>
@@ -198,13 +198,48 @@ export function PackageList() {
                       <DialogContent className="w-[calc(100%-24px)] max-w-[350px] p-3 xs:p-4 sm:p-5">
                         <DialogHeader className="pb-0 space-y-1">
                           <DialogTitle className="text-center text-base">
-                            Etiqueta da Encomenda
+                            {pkg.status === 'delivered'
+                              ? 'Assinatura de Entrega'
+                              : 'Etiqueta da Encomenda'}
                           </DialogTitle>
                         </DialogHeader>
                         <div className="flex justify-center">
-                          <div ref={labelRef} className="w-full">
-                            <PackageLabelList data={pkg} />
-                          </div>
+                          {pkg.status === 'delivered' ? (
+                            <div className="w-full">
+                              {pkg.signature ? (
+                                <div className="border rounded-md p-2 bg-muted/30">
+                                  <img
+                                    src={pkg.signature.signature_url}
+                                    alt="Assinatura do Morador"
+                                    className="w-full"
+                                  />
+                                  <p className="text-sm text-muted-foreground text-center mt-2">
+                                    Assinatura do morador na entrega
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="text-center p-4 border rounded-md">
+                                  <p className="text-muted-foreground">Assinatura não disponível</p>
+                                </div>
+                              )}
+                              <div className="mt-3">
+                                <p className="text-sm font-medium">Entregue em:</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {format(
+                                    new Date(String(pkg.delivered_at)),
+                                    "dd/MM/yyyy 'às' HH:mm",
+                                    {
+                                      locale: ptBR,
+                                    },
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div ref={labelRef} className="w-full">
+                              <PackageLabelList data={pkg} />
+                            </div>
+                          )}
                         </div>
                         <DialogFooter className="mt-2 sm:mt-4 flex flex-col xs:flex-row gap-2">
                           <DialogClose asChild>
@@ -215,13 +250,15 @@ export function PackageList() {
                               Fechar
                             </Button>
                           </DialogClose>
-                          <Button
-                            onClick={handlePrint}
-                            className="w-full min-h-touch-target rounded-mobile text-sm"
-                          >
-                            <Printer className="mr-2 h-4 w-4" />
-                            Imprimir
-                          </Button>
+                          {pkg.status !== 'delivered' && (
+                            <Button
+                              onClick={handlePrint}
+                              className="w-full min-h-touch-target rounded-mobile text-sm"
+                            >
+                              <Printer className="mr-2 h-4 w-4" />
+                              Imprimir
+                            </Button>
+                          )}
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
@@ -241,13 +278,50 @@ export function PackageList() {
                         <DialogContent className="w-[calc(100%-24px)] max-w-[350px] p-3">
                           <DialogHeader className="pb-0 space-y-1">
                             <DialogTitle className="text-center text-base">
-                              Etiqueta da Encomenda
+                              {pkg.status === 'delivered'
+                                ? 'Assinatura de Entrega'
+                                : 'Etiqueta da Encomenda'}
                             </DialogTitle>
                           </DialogHeader>
                           <div className="flex justify-center">
-                            <div ref={labelRef} className="w-full">
-                              <PackageLabelList data={pkg} />
-                            </div>
+                            {pkg.status === 'delivered' ? (
+                              <div className="w-full">
+                                {pkg.signature ? (
+                                  <div className="border rounded-md p-2 bg-muted/30">
+                                    <img
+                                      src={pkg.signature.signature_url}
+                                      alt="Assinatura do Morador"
+                                      className="w-full"
+                                    />
+                                    <p className="text-sm text-muted-foreground text-center mt-2">
+                                      Assinatura do morador na entrega
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <div className="text-center p-4 border rounded-md">
+                                    <p className="text-muted-foreground">
+                                      Assinatura não disponível
+                                    </p>
+                                  </div>
+                                )}
+                                <div className="mt-3">
+                                  <p className="text-sm font-medium">Entregue em:</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {format(
+                                      new Date(String(pkg.delivered_at)),
+                                      "dd/MM/yyyy 'às' HH:mm",
+                                      {
+                                        locale: ptBR,
+                                      },
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div ref={labelRef} className="w-full">
+                                <PackageLabelList data={pkg} />
+                              </div>
+                            )}
                           </div>
                           <DialogFooter className="mt-2 flex flex-col gap-2">
                             <DialogClose asChild>
@@ -258,13 +332,15 @@ export function PackageList() {
                                 Fechar
                               </Button>
                             </DialogClose>
-                            <Button
-                              onClick={handlePrint}
-                              className="w-full min-h-touch-target rounded-mobile text-sm"
-                            >
-                              <Printer className="mr-2 h-4 w-4" />
-                              Imprimir
-                            </Button>
+                            {pkg.status !== 'delivered' && (
+                              <Button
+                                onClick={handlePrint}
+                                className="w-full min-h-touch-target rounded-mobile text-sm"
+                              >
+                                <Printer className="mr-2 h-4 w-4" />
+                                Imprimir
+                              </Button>
+                            )}
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>

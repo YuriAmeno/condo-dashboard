@@ -36,6 +36,24 @@ export type DoormanShift =
 export interface Database {
   public: {
     Tables: {
+      signatures: {
+        Row: {
+          id: string
+          signature_url: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          signature_url: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          signature_url?: string
+          created_at?: string
+        }
+      }
+
       buildings: {
         Row: {
           id: string
