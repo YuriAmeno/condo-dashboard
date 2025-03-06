@@ -27,7 +27,7 @@ export const useDashboardMetrics = (period: string, building?: any) => {
 
       const { start, end } = getDaysPeriod(period);
 
-      console.log(userType)
+
       let query = supabase
         .from("packages")
         .select(
