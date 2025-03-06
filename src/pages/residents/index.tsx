@@ -50,8 +50,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetFooter,
-  SheetClose,
 } from '@/components/ui/sheet'
 import { useToast } from '@/hooks/use-toast'
 import { ImportDialog } from './import-dialog'
@@ -73,8 +71,6 @@ export function Residents() {
   const [buildingFilter, setBuildingFilter] = useState<string | 'all'>('all')
   const [isCreating, setIsCreating] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
-  const [open, setOpen] = useState(false)
-  const [selectedResident, setSelectedResident] = useState<Resident | null>(null)
 
   const { residents, isLoading, updateResidents, deleteResident } = useResidents()
   const { data: buildings } = useBuildingsList()
@@ -386,8 +382,6 @@ export function Residents() {
                         <SheetContent
                           side="right"
                           className="w-full sm:max-w-md md:max-w-lg lg:max-w-xl p-4 sm:p-6"
-                          onEscapeKeyDown={() => setOpen(false)}
-                          onPointerDownOutside={() => setOpen(false)}
                         >
                           <SheetHeader>
                             <SheetTitle>Detalhes do Morador</SheetTitle>
@@ -395,7 +389,7 @@ export function Residents() {
                               Informações completas sobre o morador
                             </SheetDescription>
                           </SheetHeader>
-                          <ResidentDetails resident={resident} onClose={() => setOpen(false)} />
+                          <ResidentDetails resident={resident} />
                         </SheetContent>
                       </Sheet>
 
@@ -514,8 +508,6 @@ export function Residents() {
                             <SheetContent
                               side="right"
                               className="w-full sm:max-w-md md:max-w-lg lg:max-w-xl p-4 sm:p-6"
-                              onEscapeKeyDown={() => setOpen(false)}
-                              onPointerDownOutside={() => setOpen(false)}
                             >
                               <SheetHeader>
                                 <SheetTitle>Detalhes do Morador</SheetTitle>
@@ -523,7 +515,7 @@ export function Residents() {
                                   Informações completas sobre o morador
                                 </SheetDescription>
                               </SheetHeader>
-                              <ResidentDetails resident={resident} onClose={() => setOpen(false)} />
+                              <ResidentDetails resident={resident} />
                             </SheetContent>
                           </Sheet>
 

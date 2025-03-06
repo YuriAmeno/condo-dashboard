@@ -20,10 +20,9 @@ type Resident = Database['public']['Tables']['residents']['Row'] & {
 
 interface ResidentDetailsProps {
   resident: Resident
-  onClose: () => void
 }
 
-export function ResidentDetails({ resident, onClose }: ResidentDetailsProps) {
+export function ResidentDetails({ resident }: ResidentDetailsProps) {
   const { user } = useAuth()
   const residentPackageStts: { pending: 0; delivered: 0 } = resident.packages?.reduce(
     (acc: any, val: any) => {
