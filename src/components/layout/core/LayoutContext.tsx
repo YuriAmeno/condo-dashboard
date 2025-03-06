@@ -1,4 +1,4 @@
-import React, { createContext, useState, ReactNode, useEffect } from 'react'
+import React, { createContext, useState, ReactNode } from 'react'
 
 export interface LayoutContextType {
   openPackagePending: boolean

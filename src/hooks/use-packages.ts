@@ -37,7 +37,7 @@ export function usePackages(options: UsePackagesOptions = {}) {
           ),
           resident:residents (*)
         `)
-        // .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id);
+        .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id);
 
       if (options.status) {
         query = query.eq('status', options.status);
@@ -67,6 +67,4 @@ export function usePackages(options: UsePackagesOptions = {}) {
   });
 
   return query;
-
-  // ... resto do código permanece igual
 }
