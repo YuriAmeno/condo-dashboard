@@ -1,0 +1,15 @@
+ apartment_complex
+ apartments
+ buildings
+ company
+ doormen
+ doormen_history
+ managers
+ notification_logs
+ notification_queue
+ notification_templates
+ packages
+ residents
+ signatures
+ store
+

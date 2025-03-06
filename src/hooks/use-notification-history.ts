@@ -45,11 +45,12 @@ export function useNotificationHistory(filters?: NotificationHistoryFilters) {
               type,
               title
             ),
-            package:packages!inner(*, apartment:apartments!inner(*,building:buildings!inner(*)))
+            package:packages!inner(*, apartment:apartments!inner(*,building:buildings!inner(*,manager:managers!inner(*,apartment_complex_id))))
           )
         `
         )
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .eq("queue.package.apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id)
 
       if (filters?.residentId) {
         query = query.eq("queue.resident_id", filters.residentId);
@@ -67,35 +68,13 @@ export function useNotificationHistory(filters?: NotificationHistoryFilters) {
         query = query.lte("created_at", filters.endDate);
       }
 
-      if (userType?.type === "manager") {
-        const { data: doormen, error: doormenError } = await supabase
-          .from("doormen")
-          .select("user_id")
-          .eq("manager_id", userType.managerId);
-
-        if (doormenError) {
-          console.error("Error fetching doormen:", doormenError);
-          return null;
-        }
-
-        const doormenIds = doormen.map((d) => d.user_id);
-        doormenIds.push(userType.relatedId);
-
-        query = query.in(
-          "queue.package.apartment.building.user_id",
-          doormenIds
-        );
-      } else {
-        query = query.in("queue.package.apartment.building.user_id", [
-          userType?.relatedId,
-          userType?.doormanUserId,
-        ]);
-      }
+    
 
       const { data, error } = await query;
 
       if (error) throw error;
       return data as NotificationLog[];
     },
+    enabled: !!userTypeQuery.isLoading,
   });
 }

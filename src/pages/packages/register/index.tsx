@@ -1,14 +1,14 @@
-import { useState, useRef } from "react";
-import { useReactToPrint } from "react-to-print";
-import { Package, Printer, Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useBuildingsList } from "@/hooks/use-buildings";
-import { useApartments } from "@/hooks/use-apartments";
-import { useResidents } from "@/hooks/use-residents";
-import { useCreatePackage } from "@/hooks/use-create-package";
-import { packageSchema, type PackageFormData } from "@/lib/validations/package";
-import { Button } from "@/components/ui/button";
+import { useState, useRef, useEffect } from 'react'
+import { useReactToPrint } from 'react-to-print'
+import { Package, Printer, Loader2 } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useBuildingsList } from '@/hooks/use-buildings'
+import { useApartments } from '@/hooks/use-apartments'
+import { useResidents } from '@/hooks/use-residents'
+import { useCreatePackage } from '@/hooks/use-create-package'
+import { packageSchema, type PackageFormData } from '@/lib/validations/package'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -16,16 +16,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
   DialogContent,
@@ -33,80 +33,104 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { PackageLabel } from "@/components/packages/package-label";
-import { packageSend } from "../core/_requests";
+} from '@/components/ui/dialog'
+import { useToast } from '@/hooks/use-toast'
+import { PackageLabel } from '@/components/packages/package-label'
+import { getCompanies, getStores, packageSend } from '../core/_requests'
+import type { Company } from '../core/_models'
+import type { Store } from '../core/_models'
+import { z } from 'zod'
 
 export function PackageRegister() {
-  const [showLabel, setShowLabel] = useState(false);
-  const [createdPackage, setCreatedPackage] = useState<any>(null);
-  const labelRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-  const createPackage = useCreatePackage();
+  const [showLabel, setShowLabel] = useState(false)
+  const [createdPackage, setCreatedPackage] = useState<any>(null)
+  const labelRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
+  const createPackage = useCreatePackage()
+
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [stores, setStores] = useState<Store[]>([])
 
   const form = useForm<PackageFormData>({
     resolver: zodResolver(packageSchema),
     defaultValues: {
-      building_id: "",
-      apartment_id: "",
-      resident_id: "",
-      delivery_company: "",
-      store_name: "",
-      notes: "",
-      storage_location: "",
+      building_id: '',
+      apartment_id: '',
+      resident_id: '',
+      delivery_company: '',
+      store_name: '',
+      notes: '',
+      storage_location: '',
+      custom_delivery_company: '',
     },
-  });
+  })
 
-  const { data: buildings } = useBuildingsList();
-  const { data: apartments } = useApartments(form.watch("building_id"));
-  const { residents } = useResidents();
+  useEffect(() => {
+    const othersOption = [{ id: 'others', name: 'Outros' }]
+    getCompanies().then((companies) => {
+      setCompanies([...companies, othersOption[0]])
+    })
+    getStores().then((stores) => {
+      setStores([...stores, othersOption[0]])
+    })
+  }, [])
 
-  // Filtrar residentes pelo apartamento selecionado
+  const { data: buildings } = useBuildingsList()
+  const { data: apartments } = useApartments(form.watch('building_id'))
+  const { residents } = useResidents()
+
   const filteredResidents = residents?.filter(
-    (resident: any) => resident.apartment.id === form.watch("apartment_id")
-  );
+    (resident: any) => resident.apartment.id === form.watch('apartment_id'),
+  )
 
   const handlePrint = useReactToPrint({
     content: () => labelRef.current,
-  });
+  })
 
-  const onSubmit = async (data: PackageFormData) => {
+  const onSubmit = async (values: z.infer<typeof packageSchema>) => {
+    const finalDeliveryCompany =
+      values.delivery_company === 'Outros'
+        ? values.custom_delivery_company
+        : values.delivery_company
+
+    const finalStoreName =
+      values.store_name === 'Outros' ? values.custom_store_name : values.store_name
+
     try {
-      const result = await createPackage.mutateAsync(data);
-      setCreatedPackage(result);
+      values.delivery_company = String(finalDeliveryCompany)
+      values.store_name = String(finalStoreName)
+      const result = await createPackage.mutateAsync(values)
+      setCreatedPackage(result)
       const dataSendWebHook = {
-        delivery_company: data.delivery_company,
-        store_name: data.store_name,
-        resident_id: data.resident_id,
+        delivery_company: String(finalDeliveryCompany),
+        store_name: String(finalStoreName),
+        resident_id: values.resident_id,
         package_id: String(result.id),
-      };
-      await packageSend(dataSendWebHook);
-      setShowLabel(true);
-      form.reset();
+      }
+      await packageSend(dataSendWebHook)
+      setShowLabel(true)
+      form.reset()
       toast({
-        title: "Encomenda registrada",
-        description: "A encomenda foi registrada com sucesso.",
-      });
+        title: 'Encomenda registrada',
+        description: 'A encomenda foi registrada com sucesso.',
+      })
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Erro ao registrar encomenda",
+        variant: 'destructive',
+        title: 'Erro ao registrar encomenda',
         description:
           error instanceof Error
             ? error.message
-            : "Não foi possível registrar a encomenda. Tente novamente.",
-      });
+            : 'Não foi possível registrar a encomenda. Tente novamente.',
+      })
     }
-  };
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center space-x-2">
         <Package className="h-6 w-6 text-primary" />
-        <h1 className="text-3xl font-bold tracking-tight">
-          Registrar Encomenda
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Registrar Encomenda</h1>
       </div>
 
       <Form {...form}>
@@ -124,10 +148,10 @@ export function PackageRegister() {
                     <FormLabel>Torre</FormLabel>
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value);
+                        field.onChange(value)
                         // Reset apartment and resident when building changes
-                        form.setValue("apartment_id", "");
-                        form.setValue("resident_id", "");
+                        form.setValue('apartment_id', '')
+                        form.setValue('resident_id', '')
                       }}
                       value={field.value}
                     >
@@ -157,12 +181,12 @@ export function PackageRegister() {
                     <FormLabel>Apartamento</FormLabel>
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value);
+                        field.onChange(value)
                         // Reset resident when apartment changes
-                        form.setValue("resident_id", "");
+                        form.setValue('resident_id', '')
                       }}
                       value={field.value}
-                      disabled={!form.watch("building_id")}
+                      disabled={!form.watch('building_id')}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -191,7 +215,7 @@ export function PackageRegister() {
                     <Select
                       onValueChange={field.onChange}
                       value={field.value}
-                      disabled={!form.watch("apartment_id")}
+                      disabled={!form.watch('apartment_id')}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -223,30 +247,81 @@ export function PackageRegister() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Empresa de Entrega</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Correios, Loggi, etc" {...field} />
-                  </FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma empresa de entrega" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {companies.map((company) => (
+                        <SelectItem key={company.id} value={company.name}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {form.watch('delivery_company') === 'others' && (
+              <FormField
+                control={form.control}
+                name="custom_delivery_company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome da Empresa</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Digite o nome da empresa" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
               name="store_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome da Loja</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ex: Amazon, Mercado Livre, etc"
-                      {...field}
-                    />
-                  </FormControl>
+                  <FormLabel>Loja</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma loja" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {stores.map((store) => (
+                        <SelectItem key={store.id} value={store.name}>
+                          {store.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {form.watch('store_name') === 'others' && (
+              <FormField
+                control={form.control}
+                name="custom_store_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome da Empresa</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Digite o nome da loja" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -255,10 +330,7 @@ export function PackageRegister() {
                 <FormItem>
                   <FormLabel>Local de Armazenamento</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Ex: Prateleira A3, Armário 2, etc"
-                      {...field}
-                    />
+                    <Input placeholder="Ex: Prateleira A3, Armário 2, etc" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -284,18 +356,14 @@ export function PackageRegister() {
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={createPackage.isPending}
-          >
+          <Button type="submit" className="w-full" disabled={createPackage.isPending}>
             {createPackage.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Registrando...
               </>
             ) : (
-              "Registrar Encomenda"
+              'Registrar Encomenda'
             )}
           </Button>
         </form>
@@ -306,15 +374,12 @@ export function PackageRegister() {
           <DialogHeader>
             <DialogTitle>Etiqueta da Encomenda</DialogTitle>
             <DialogDescription>
-              A encomenda foi registrada com sucesso. Imprima a etiqueta para
-              identificação.
+              A encomenda foi registrada com sucesso. Imprima a etiqueta para identificação.
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex justify-center">
-            <div ref={labelRef}>
-              {createdPackage && <PackageLabel data={createdPackage} />}
-            </div>
+            <div ref={labelRef}>{createdPackage && <PackageLabel data={createdPackage} />}</div>
           </div>
 
           <DialogFooter>
@@ -329,5 +394,5 @@ export function PackageRegister() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

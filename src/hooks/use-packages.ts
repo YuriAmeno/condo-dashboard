@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import type { Database } from '@/types/supabase';
+import { useUserType } from './queryUser';
 
 type Package = Database['public']['Tables']['packages']['Row'] & {
   apartment: Database['public']['Tables']['apartments']['Row'] & {
@@ -19,7 +20,7 @@ interface UsePackagesOptions {
 
 export function usePackages(options: UsePackagesOptions = {}) {
   const { user } = useAuth();
-
+  const { data: userType } = useUserType();
   const query = useQuery({
     queryKey: ['packages', options, user?.id],
     queryFn: async () => {
@@ -27,12 +28,16 @@ export function usePackages(options: UsePackagesOptions = {}) {
         .from('packages')
         .select(`
           *,
-          apartment:apartments (
+          apartment:apartments!inner(
             *,
-            building:buildings (*)
+            building:buildings!inner(
+              *,
+              manager:managers!inner(apartment_complex_id)
+            ),
           ),
           resident:residents (*)
-        `);
+        `)
+        .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id);
 
       if (options.status) {
         query = query.eq('status', options.status);
@@ -55,13 +60,11 @@ export function usePackages(options: UsePackagesOptions = {}) {
       const { data, error } = await query;
       if (error) throw error;
 
-      return data as Package[];
+       return data as unknown as Package[]; 
     },
     refetchInterval: options.status === 'pending' ? 30 * 1000 : false,
     enabled: !!user,
   });
 
   return query;
-
-  // ... resto do código permanece igual
 }

@@ -52,6 +52,8 @@ export function useDoormen(filters?: {
     queryFn: async () => {
       const userData = usertype?.data;
       // Buscar porteiros vinculados ao manager atual
+
+  
       const { data: doormen, error: doormenError } = await supabase
         .from("doormen")
         .select(
@@ -59,7 +61,7 @@ export function useDoormen(filters?: {
           *
         `
         )
-        .eq("manager_id", userData?.managerId);
+        .eq("apartment_complex_id", userData?.apartment_complex_id);
 
       if (doormenError) throw doormenError;
 

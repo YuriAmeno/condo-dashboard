@@ -1,99 +1,106 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { Html5Qrcode } from 'html5-qrcode'
 
 interface UseQRCodeScannerProps {
-  onResult: (result: string) => void;
-  onError?: (error: string) => void;
+  onResult: (result: string) => void
+  onError?: (error: string) => void
 }
 
 export function useQRCodeScanner({ onResult, onError }: UseQRCodeScannerProps) {
-  const [isScanning, setIsScanning] = useState(false);
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const [isScanning, setIsScanning] = useState(false)
+  const scannerRef = useRef<Html5Qrcode | null>(null)
 
   const startScanner = useCallback(
     async (elementId: string) => {
       try {
         if (!scannerRef.current) {
-          scannerRef.current = new Html5Qrcode(elementId);
+          scannerRef.current = new Html5Qrcode(elementId)
         }
 
-        const scanner = scannerRef.current;
-        setIsScanning(true);
+        const scanner = scannerRef.current
+        setIsScanning(true)
 
         await scanner.start(
-          { facingMode: "environment" },
+          { facingMode: 'environment' },
           {
             fps: 10,
             qrbox: { width: 250, height: 250 },
             aspectRatio: 1,
           },
           (decodedText) => {
-            onResult(decodedText);
+            onResult(decodedText)
           },
           (errorMessage) => {
-            if (onError && !errorMessage.includes("NotFound")) {
-              onError(errorMessage);
+            if (onError && !errorMessage.includes('NotFound')) {
+              onError(errorMessage)
             }
-          }
-        );
+          },
+        )
       } catch (error) {
-        setIsScanning(false);
+        setIsScanning(false)
         if (onError) {
-          onError(
-            error instanceof Error ? error.message : "Failed to start scanner"
-          );
+          onError(error instanceof Error ? error.message : 'Failed to start scanner')
         }
       }
     },
-    [onResult, onError]
-  );
+    [onResult, onError],
+  )
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current && isScanning) {
       try {
-        await scannerRef.current.stop();
-        setIsScanning(false);
+        await scannerRef.current.stop()
+        setIsScanning(false)
       } catch (error) {
         if (onError) {
-          onError("Failed to stop scanner");
+          onError('Failed to stop scanner')
         }
       }
     }
-  }, [isScanning, onError]);
+  }, [isScanning, onError])
 
   const toggleScanner = useCallback(
     async (elementId: string) => {
       if (isScanning) {
-        await stopScanner();
+        await stopScanner()
       } else {
-        await startScanner(elementId);
+        await startScanner(elementId)
       }
     },
-    [isScanning, startScanner, stopScanner]
-  );
+    [isScanning, startScanner, stopScanner],
+  )
 
   // Cleanup scanner on unmount
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && scannerRef.current) {
-        scannerRef.current.stop().catch(() => {});
-        scannerRef.current.clear();
-        scannerRef.current = null;
-        setIsScanning(false);
+    const stopScanner = () => {
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {})
+        scannerRef.current.clear()
+        scannerRef.current = null
+        setIsScanning(false)
       }
-    };
+    }
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    const handleFocusChange = () => {
+      if (document.hidden || !document.hasFocus()) {
+        stopScanner()
+      } else {
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleFocusChange)
+    window.addEventListener('blur', handleFocusChange)
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
+      document.removeEventListener('visibilitychange', handleFocusChange)
+      window.removeEventListener('blur', handleFocusChange)
+    }
+  }, [document])
 
   return {
     isScanning,
     startScanner,
     stopScanner,
     toggleScanner,
-  };
+  }
 }

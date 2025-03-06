@@ -29,41 +29,21 @@ export function useResidents() {
     queryKey: ["residents", user?.id],
     queryFn: async () => {
       const userType = userTypeQuery.data;
-      let query = supabase
-        .from("residents")
-        .select(
-          `
+     let query = supabase
+      .from("residents")
+      .select(`
+        *,
+        apartment:apartments!inner (
           *,
-          apartment:apartments!inner (
-            *,
-            building:buildings!inner (*)
-          ),
-          packages:packages (*)
-        `
+          building:buildings!inner (
+            *,manager:managers!inner(*)
+          )
         )
-        .order("name");
+      `)
+      .order("name")
+      .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id);
 
-      if (userType?.type === "manager") {
-        const { data: doormen, error: doormenError } = await supabase
-          .from("doormen")
-          .select("user_id")
-          .eq("manager_id", userType.managerId);
-
-        if (doormenError) {
-          console.error("Error fetching doormen:", doormenError);
-          return null;
-        }
-
-        const doormenIds = doormen.map((d) => d.user_id);
-        doormenIds.push(userType.relatedId);
-
-        query = query.in("apartment.building.user_id", doormenIds);
-      } else {
-        query = query.in("apartment.building.user_id", [
-          userType?.relatedId,
-          userType?.doormanUserId,
-        ]);
-      }
+    
 
       const { data, error } = await query;
 

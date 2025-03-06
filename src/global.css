@@ -1,0 +1,28 @@
+/* Ajustes para o tema dark */
+.dark {
+  --background: 0 0% 10%;
+  --foreground: 0 0% 95%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 65%;
+  color-scheme: dark;
+}
+
+/* Transições suaves entre temas */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Cores específicas de elementos no tema dark */
+.dark .bg-gray-200 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Regras para tabelas mais legíveis no modo dark */
+.dark table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Destaque da célula no tema dark */
+.dark .bg-blue-900 {
+  background-color: rgba(30, 64, 175, 0.7);
+}
