@@ -8,6 +8,7 @@ type Package = Database['public']['Tables']['packages']['Row'] & {
   apartment: Database['public']['Tables']['apartments']['Row'] & {
     building: Database['public']['Tables']['buildings']['Row']
   }
+  signature: Database['public']['Tables']['signatures']['Row']
 }
 
 export function useRecentPackages(period: string, building?: any) {
@@ -76,7 +77,8 @@ export function useRecentPackagesList(limit = 10) {
             *,
             manager:managers!inner(apartment_complex_id)
           )
-        )
+        ),
+        signature: signatures!inner(signature_url)
         `,
         )
          .eq("apartment.building.manager.apartment_complex_id", userType?.apartment_complex_id)

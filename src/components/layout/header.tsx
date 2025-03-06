@@ -58,7 +58,7 @@ export function Header({ children }: HeaderProps) {
 
   const handleSignOut = async () => {
     const userCurrent = userLogged.data
-    if (userCurrent?.type == 'manager') {
+    if (userCurrent?.type == 'manager' || packs.length == 0) {
       const { error } = await signOut()
       if (error) {
         toast({

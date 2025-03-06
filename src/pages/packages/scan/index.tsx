@@ -45,11 +45,11 @@ import { packageConfirm } from '../core/_requests'
 import { useTheme } from '@/components/theme-provider'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { createSignature } from '@/API/signature'
-import { useAuth } from '@/lib/auth'
+import { useUserType } from '@/hooks/queryUser'
 
 export function PackageScan() {
   const [qrCode, setQrCode] = useState<string | null>(null)
-  const { user } = useAuth()
+  const { data: user } = useUserType()
   const [manualCode, setManualCode] = useState('')
   const [showDeliveryDialog, setShowDeliveryDialog] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
