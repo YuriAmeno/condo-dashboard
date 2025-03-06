@@ -62,7 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const isActive = metadata?.is_active ?? true
           const apartment_complex_id = metadata?.apartment_complex_id
 
-          console.log(metadata)
           setSession(currentSession)
           setUser({
             ...currentSession.user,

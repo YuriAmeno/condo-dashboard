@@ -34,9 +34,8 @@ export function Register() {
       confirmPassword: '',
     },
   })
-  console.log('form', form.formState.errors)
+
   const onSubmit = async (data: RegisterFormData) => {
-    console.log('data', data)
     try {
       setIsCreating(true)
 
